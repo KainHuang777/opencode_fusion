@@ -1,8 +1,9 @@
 # OpenRouter Fusion 深度技術研究報告
 
-> 研究日期：2026-06-20  
+> 研究日期：2026-06-20（初版）、2026-06-21（深度 Fusion 分析更新）  
 > 資料來源：OpenRouter Blog, API Docs, Server Tools Docs, Plugin Docs  
-> 參考文章：[Surpassing Frontier Performance with Fusion](https://openrouter.ai/blog/announcements/fusion-beats-frontier/)
+> 參考文章：[Surpassing Frontier Performance with Fusion](https://openrouter.ai/blog/announcements/fusion-beats-frontier/)  
+> 分析方式：使用本專案 fusion-research skill 進行 4-panel 多模型協同分析（Judge: DeepSeek V4 Pro）
 
 ---
 
@@ -165,35 +166,68 @@ OpenRouter 提供預設 panel 組合，免除手動選模型：
 
 ---
 
-## 六、與 opencode Skill / Workflow 的對應分析
+## 六、opencode Fusion Skill 實作現況
 
-### 可實現的模式
+### 6.1 架構總覽
 
-利用 opencode 的 `task` 工具，可以近似模擬 Fusion 的工作流：
+本專案已實作完整的多模型 Fusion Skill 系統，運行於 opencode 編輯器內：
 
 ```
-AI 判斷問題是否適合多角度分析
-  → 同時啟動 2-3 個 Task subagent（不同系統指令視角）
-  → 收集所有回應
-  → AI 本體扮演 Judge，進行綜合分析
-  → 產出最終答案
+opencode.jsonc (中央配置，預設模型 DeepSeek V4 Pro)
+  ├── Skills (2 個): fusion-research, fiction-editor
+  ├── Research Panels (8 個): fusion-deepseek, fusion-kimi, fusion-qwen,
+  │     fusion-glm, fusion-gemini, fusion-skyunion, fusion-budget-ds, fusion-budget-mimo
+  └── Fiction Panels (3 個): fusion-fiction-plot, fusion-fiction-character, fusion-fiction-prose
+
+Pipeline:
+  1. Triage (AI 判斷問題是否需要 Fusion)
+  2. Prompt Design (為每個 panel 設計不同視角的 prompt)
+  3. Parallel Dispatch (task() 工具平行啟動 2-4 panel subagent)
+  4. Judge Synthesis (主 AI 綜合分析：共識/分歧/獨特見解/盲點)
+  5. Self-Evaluation (信心水準)
 ```
 
-### 現有差異
+### 6.2 模型多樣性（6 個 Provider、8 個不同架構）
 
-| 面向 | OpenRouter Fusion | opencode Skill 方案 |
-|------|-------------------|---------------------|
-| 模型多樣性 | 不同架構模型（Claude/GPT/Gemini） | 同一模型（僅 prompt 差異） |
-| 執行方式 | Server-side 平行 API call | Task 工具平行啟動 |
-| Judge 模型 | 可獨立指定（如 Opus 4.8） | AI 本體自行判斷 |
-| 遞迴保護 | x-openrouter-fusion-depth header | 需手動設計防護 |
-| Tool 整合 | 內建 web_search + web_fetch | 依賴文件內已有的工具 |
-| 延遲 | 2-3x 普通請求 | 取決於 subagent 數量與複雜度 |
+| Agent | Model | Provider | 用途 |
+|-------|-------|----------|------|
+| fusion-deepseek | deepseek-v4-pro | DeepSeek | 技術深度、程式推理 |
+| fusion-kimi | kimi-k2.7-code | Moonshot | 程式架構、邏輯流 |
+| fusion-qwen | qwen3.7-plus | Alibaba | 綜合分析、廣域脈絡 |
+| fusion-glm | glm-5.2 | Zhipu | 創意思考、替代視角 |
+| fusion-gemini | gemini-3.5-flash | Google | 跨域觀點、實務約束 |
+| fusion-skyunion | claude-haiku-4.5 | Anthropic (第三方) | 細緻權衡、安全倫理 |
+| fusion-budget-ds | deepseek-v4-flash | DeepSeek | 快速平價分析 |
+| fusion-budget-mimo | mimo-v2.5 | MiMo | 平價廣域覆蓋 |
 
-### 設計建議
+### 6.3 現有差異（更新版）
 
-1. **Skill 方案（立即可行）**：定義一套引導提示，讓 AI 在遇到複雜問題時自動啟動多視角 subagent 並綜合結果
-2. **Plugin 方案（需 opencode SDK 支援）**：如果 `task` 工具未來能指定不同模型，即可實現真正的多模型 fusion
+| 面向 | OpenRouter Fusion | opencode Fusion Skill |
+|------|-------------------|-----------------------|
+| 模型多樣性 | 動態模型池（數百個模型） | 靜態 agent 註冊（8 個模型，6 個 provider） |
+| 執行方式 | Server-side 平行 API call | Task 工具平行啟動 subagent |
+| Judge 模型 | 可獨立指定任意模型 | 主 AI (DeepSeek V4 Pro)，強制 bias 避免規則 |
+| Judge 輸出 | 強制結構化 JSON | 手動 Markdown 模板 |
+| 遞迴保護 | x-openrouter-fusion-depth header | 未實作 |
+| 優雅降級 | 原生型別化（failed_models[] 等） | 未自動化（skill 文件描述但無程式碼強制） |
+| Tool 整合 | Panel 內建 web_search + web_fetch | Agent 設定 webfetch/websearch allow |
+| Preset 系統 | general-high / general-budget | 手動定義 4 種 tier（Free/Budget/Flagship/Self） |
+| 領域專用 | 無（通用融合） | 有（research + fiction-editor 雙 pipeline） |
+| 可解釋性 | 對使用者透明（黑箱） | 完全透明（用戶可看每個 panel 推理過程） |
+| 本地整合 | 無 | 可讀取工作區檔案、理解專案上下文 |
+
+### 6.4 Skill 方案的四種 Tier
+
+| Tier | Panel 組合 | 適用場景 |
+|------|-----------|---------|
+| **Free (4-panel)** | Kimi + Qwen + Gemini + Claude | 預設，最大化模型多樣性 |
+| **Budget (3-panel)** | Kimi + MiMo + DeepSeek Flash | 成本敏感場景 |
+| **Flagship (3-panel)** | Kimi + Qwen + GLM | 最高品質需求 |
+| **Self-Fusion (2-panel)** | DeepSeek × 2 | 同模型多視角（+5.2 預期增益） |
+
+### 6.5 Judge Bias 規則
+
+Judge 為 DeepSeek V4 Pro，所有 DeepSeek 系列 panel 預設排除（Self-Fusion 除外）。此規則確保 Judge 不會系統性偏好與自己同架構的模型輸出。
 
 ---
 
@@ -206,3 +240,109 @@ AI 判斷問題是否適合多角度分析
 - [DRACO Benchmark (arXiv)](https://arxiv.org/abs/2602.11685)
 - [OpenRouter May Release Spotlight](https://openrouter.ai/blog/announcements/may-release-spotlight/)
 - [Fusion Lab (interactive playground)](https://openrouter.ai/labs/fusion)
+
+---
+
+## 八、Fusion Research 深度分析報告（2026-06-21）
+
+> 使用本專案 fusion-research skill 對「opencode Fusion Skill 改進空間與本質差異」進行 4-panel 多模型協同分析。  
+> Panel: Kimi K2.7 (技術架構) + Qwen3.7 Plus (綜合策略) + Gemini 3.5 Flash (替代視角) + Claude Haiku 4.5 (細緻差異)  
+> Judge: DeepSeek V4 Pro  
+> 結果: 2/4 panel 成功（Kimi, Qwen）、2/4 失敗（Gemini, Skyunion）——印證了優雅降級機制的必要性
+
+### 8.1 三層級差異分析
+
+#### 第一層：架構層級（不可跨越的差異）
+
+| 面向 | OpenRouter Fusion | opencode Fusion Skill | 是否需要消除 |
+|------|-------------------|-----------------------|-------------|
+| 運行層級 | Server-side API 閘道 | Client-side IDE 編輯器 | **否** — 我們的優勢在本地整合 |
+| 模型存取 | 動態模型池（數百個） | 靜態 agent 註冊（8 個） | 中期可增加 agent 數量 |
+| 輸出格式 | 強制結構化 JSON | 手動 Markdown 模板 | 部分 — 可選 JSON mode |
+| 錯誤處理 | 原生型別化降級 | 未自動化 | **是** — P0 優先級 |
+| 遞迴保護 | 原生 header | 未實作 | **是** — P1 優先級 |
+
+**結論：架構層級差異是本質性的，不需要消除。** Skill-based 方案在本地工作流整合、可解釋性、可定制性上有 OpenRouter 無法觸及的優勢。
+
+#### 第二層：功能層級（可改進的差距）
+
+| 缺失功能 | 優先級 | 影響範圍 | 預期效果 |
+|---------|--------|---------|---------|
+| 結構化 partial failure / failed_models[] | **P0** | 可靠性 | 避免使用者在 panel 失敗時得到不完整資訊 |
+| Judge fail fallback（保留 raw responses） | **P0** | 韌性 | 即使 Judge 失敗，panel 的原始回應仍有價值 |
+| 遞迴保護（fusion depth tracking） | **P1** | 安全性 | 避免 panel agent 意外觸發新的 fusion 造成成本爆炸 |
+| 結構化 JSON Judge 輸出（可選） | **P1** | 一致性 | 便於下游 agent/UI 消費；保留 Markdown 作為 fallback |
+| Web 工具權限顯式配置 | **P1** | 功能完整性 | 確保 panel 能真正使用 web_search/web_fetch |
+| Timeout/retry 策略定義 | **P1** | 穩定性 | 避免 panel 逾時後流程卡住 |
+| Progressive Fusion（漸進式啟動） | **P2** | 成本效益 | 簡單問題不浪費 panel 資源 |
+| Fusion Memory（跨次學習） | **P2** | 智慧化 | 記錄最佳模型組合，隨時間進化 |
+
+#### 第三層：策略層級（方向性選擇）
+
+1. **建立量化評估機制（P0 策略）**
+   - 沒有數據就無法證明 fusion 的價值。需要建立類似 DRACO 的內部 benchmark，定期測試 fusion vs solo 在不同場景的表現。
+
+2. **擴展領域專用 skill（P1 策略）**
+   - fiction-editor 證明了領域深度定制是護城河。優先新增 Code Review / Architecture Decision skill。
+
+3. **保持「可解釋性」核心價值（P0 策略）**
+   - 與 OpenRouter 的「黑箱優化」不同，「透明推理」是用戶選擇我們的關鍵原因。不要為了結構化而犧牲可讀性。
+
+4. **抽取 Fusion Engine 核心（中期策略，6-18 個月）**
+   - 將 fusion orchestration 邏輯抽取為可獨立使用的模組，降低對 opencode task() API 的依賴。
+
+### 8.2 共識要點
+
+所有 panel 高度一致的觀點：
+
+- **Skill-based 方案與 OpenRouter 是互補關係，非競爭關係**——我們解決「特定場景深度」，他們解決「通用調用便利」
+- **最大缺口是缺乏量化評估**——沒有 benchmark 就無法證明 fusion 的實際提升
+- **錯誤處理與優雅降級是 P0**——此次分析中 2/4 panel 失敗本身就是證據
+- **領域專用 pipeline 是最大競爭優勢**——fiction-editor 的 V3→V4 改進數據證明此方向可行
+- **應新增 Code Review / Architecture Decision skill**——覆蓋開發者最高頻的日常場景
+
+### 8.3 分歧要點
+
+| 議題 | 技術視角 (Kimi) | 策略視角 (Qwen) | Judge 判斷 |
+|------|----------------|----------------|-----------|
+| JSON 輸出優先級 | P1，中期導入 | 未強調（更重可解釋性） | P1 正確，但必須保留 Markdown fallback |
+| 架構演進路徑 | 遷移至 SDK/plugin | 深耕 skill 生態 → 中期抽取引擎 | 兩者不矛盾，短期深耕 skill，中期抽取引擎 |
+| 遞迴保護 | P1 明確要求 | 未討論 | P1 正確，成本爆炸風險真實存在 |
+
+### 8.4 盲點（本次分析未觸及的主題）
+
+由於 Gemini 和 Skyunion panel 失敗，以下主題未能充分覆蓋：
+
+1. **Self-Fusion 的策略定位與最佳使用場景**
+2. **多語言場景（中/英）下 fusion 效果的差異**
+3. **Panel 間交互模式**（如 panel A 輸出作為 panel B 的 context）
+4. **二階效應**：使用者對 fusion 的過度信任、假共識問題、資訊密度下降
+5. **安全與對齊**：多模型對安全問題的不同答案處理機制
+
+建議後續進行專題 fusion 分析補足上述盲點。
+
+### 8.5 改進行動路線圖
+
+```
+Phase 1 (立即 - 1 週內):
+  ├── P0: 定義並實作 failed_models[] 結構化追蹤
+  ├── P0: 實作 Judge fail fallback（保留 raw responses）
+  └── P0: 建立內部評估框架（至少 10 題 benchmark）
+
+Phase 2 (短期 - 1 個月內):
+  ├── P1: 加入遞迴保護機制
+  ├── P1: 引入可選 JSON Judge 輸出模式
+  ├── P1: 驗證並顯式配置 web 工具權限
+  ├── P1: 定義 timeout/retry 策略
+  └── P1: 設計 Code Review / Architecture Decision skill
+
+Phase 3 (中期 - 3 個月內):
+  ├── P2: Progressive Fusion（漸進式啟動）
+  ├── P2: Fusion Memory（記錄最佳模型組合）
+  └── P2: 抽取 Fusion Engine 核心模組
+
+Phase 4 (長期 - 6-18 個月):
+  ├── 定義 Fusion-as-a-Protocol 開放標準
+  ├── 實現多語言場景的專用 fusion 配置
+  └── 建立社群貢獻的 skill 生態系統
+```

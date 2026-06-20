@@ -1,0 +1,11 @@
+[2026-06-20] Pull latest updates from KainHuang777/opencode_fusion.git
+- Added new agent configs:
+  - .opencode/agents/fusion-gemini.md
+  - .opencode/agents/fusion-skyunion.md
+- Updated agent configs:
+  - .opencode/agents/fusion-qwen.md
+- Updated skill instructions:
+  - .opencode/skills/fusion-research/SKILL.md
+- Updated repository configuration & information:
+  - README.md
+  - opencode.jsonc
