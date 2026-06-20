@@ -12,3 +12,6 @@ Thumbs.db
 
 # Node (if ever used)
 node_modules/
+
+# opencode config with API keys
+opencode.jsonc
