@@ -1,0 +1,91 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode-go/deepseek-v4-pro",
+
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+
+  "agent": {
+    "fusion-deepseek": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-pro",
+      "hidden": true,
+      "description": "Fusion panel: DeepSeek V4 Pro — technical depth, code reasoning, logical analysis. WARNING: conflicts if Judge is also DeepSeek V4 Pro"
+    },
+    "fusion-kimi": {
+      "mode": "subagent",
+      "model": "opencode-go/kimi-k2.7-code",
+      "hidden": true,
+      "description": "Fusion panel: Kimi K2.7 Code — code architecture, logic flow, implementation"
+    },
+    "fusion-qwen": {
+      "mode": "subagent",
+      "model": "opencode-go/qwen3.7-max",
+      "hidden": true,
+      "description": "Fusion panel: Qwen3.7 Max — comprehensive analysis, broad context, strategy"
+    },
+    "fusion-glm": {
+      "mode": "subagent",
+      "model": "opencode-go/glm-5.2",
+      "hidden": true,
+      "description": "Fusion panel: GLM-5.2 — creative thinking, alternative angles, counterarguments"
+    },
+    "fusion-budget-ds": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fusion budget panel: DeepSeek V4 Flash — fast, low-cost technical analysis. WARNING: conflicts if Judge is DeepSeek family"
+    },
+    "fusion-budget-mimo": {
+      "mode": "subagent",
+      "model": "opencode-go/mimo-v2.5",
+      "hidden": true,
+      "description": "Fusion budget panel: MiMo V2.5 — fast, low-cost broad coverage"
+    },
+
+    "fusion-fiction-plot": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "hidden": true,
+      "description": "Fiction editor: Plot, pacing, scene structure, narrative logic"
+    },
+    "fusion-fiction-character": {
+      "mode": "subagent",
+      "model": "opencode-go/qwen3.7-plus",
+      "hidden": true,
+      "description": "Fiction editor: Character, emotion, dialogue, relationship dynamics"
+    },
+    "fusion-fiction-prose": {
+      "mode": "subagent",
+      "model": "opencode-go/mimo-v2.5",
+      "hidden": true,
+      "description": "Fiction editor: Prose style, imagery, sentence craft, narrative voice"
+    },
+
+    "build": {
+      "permission": {
+        "task": {
+          "fusion-*": "allow",
+          "*": "allow"
+        }
+      }
+    },
+
+    "general": {
+      "permission": {
+        "task": {
+          "fusion-*": "allow",
+          "*": "allow"
+        }
+      }
+    }
+  },
+
+  "permission": {
+    "skill": {
+      "fusion-research": "allow",
+      "*": "allow"
+    }
+  }
+}

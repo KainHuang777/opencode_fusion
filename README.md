@@ -1,0 +1,178 @@
+# OpenRouter Fusion — opencode 多模型協同系統
+
+> 基於 [OpenRouter Fusion 研究報告](./openrouter_fusion_research.md) 設計的 opencode Skill + Agent 實作方案
+
+## 概念
+
+將同一任務派送給多個不同架構的模型，由 Judge 分析共識與差異後產出綜合結果。三個臭皮匠勝過一個諸葛亮。
+
+## 適用場景
+
+| 場景 | 相對單一模型增益 |
+|------|----------------|
+| 研究分析、架構決策 | +5~10 分 |
+| 小說章節編輯修訂 | +8~15 分（三位編輯視角互補） |
+| 複雜策略評估 | +3~7 分 |
+| 簡單問答 | 無增益，直接回答 |
+
+## 快速開始
+
+```bash
+# 1. 確認 opencode-go provider 可用
+opencode models
+# 若無 → /connect → 選 OpenCode Go → 輸入 API key
+
+# 2. 重啟 opencode（配置啟動時載入）
+opencode
+```
+
+## 檔案結構
+
+```
+E:\WORK\Fusion\
+├── opencode.jsonc                    # 專案配置（agent + skill 註冊）
+├── openrouter_fusion_research.md    # 原始研究報告
+├── README.md                        # 本文件
+└── .opencode/
+    ├── agents/
+    │   ├── fusion-deepseek.md       # [Research] 技術深度 Panel (V4 Pro)
+    │   ├── fusion-kimi.md           # [Research] 架構分析 Panel (K2.7 Code)
+    │   ├── fusion-qwen.md           # [Research] 綜合分析 Panel (Qwen3.7 Max)
+    │   ├── fusion-glm.md            # [Research] 創意思考 Panel (GLM-5.2)
+    │   ├── fusion-budget-ds.md      # [Research] 平價 Panel (V4 Flash)
+    │   ├── fusion-budget-mimo.md    # [Research] 平價 Panel (MiMo V2.5)
+    │   ├── fusion-fiction-plot.md   # [Fiction] 結構編輯 (V4 Flash)
+    │   ├── fusion-fiction-character.md  # [Fiction] 人物編輯 (Qwen3.7 Plus)
+    │   └── fusion-fiction-prose.md  # [Fiction] 文筆編輯 (MiMo V2.5)
+    └── skills/
+        ├── fusion-research/
+        │   └── SKILL.md             # 研究分析工作流
+        └── fiction-editor/
+            └── SKILL.md             # 小說編輯工作流
+```
+
+## 工作流一：Fusion Research（研究分析）
+
+多模型平行分析 + Judge 綜合，適用於架構決策、技術調研、策略評估。
+
+```
+使用者提問
+    │
+    ▼
+判斷觸發 Fusion？
+  ├─ 簡單問題 → 直接回答
+  └─ 複雜問題 →
+       Phase 1: 為每個 Panel 設計不同視角提示詞
+       Phase 2: 平行派遣 → task(fusion-*) × 3
+       Phase 3: Judge 分析共識/分歧/盲點
+       Phase 4: 輸出結構化報告
+```
+
+### 可用 Panel
+
+| 名稱 | 模型 | 強項 | 成本 | Judge 相容 |
+|------|------|------|------|-----------|
+| `fusion-deepseek` | V4 Pro | 技術深度、邏輯推理 | $1.74/$3.48 | ⚠️ 衝突 |
+| `fusion-kimi` | K2.7 Code | 程式架構、實作思維 | $0.95/$4.00 | ✅ |
+| `fusion-qwen` | Qwen3.7 Max | 綜合分析、廣度覆蓋 | $2.50/$7.50 | ✅ |
+| `fusion-glm` | GLM-5.2 | 創意思考、反向論證 | $1.40/$4.40 | ✅ |
+| `fusion-budget-ds` | V4 Flash | 快速技術分析 | $0.14/$0.28 | ⚠️ 衝突 |
+| `fusion-budget-mimo` | MiMo V2.5 | 廣度快速覆蓋 | $0.14/$0.28 | ✅ |
+
+> Judge 預設為 DeepSeek V4 Pro。任何使用同家族模型的 Panel 會產生輕微裁判偏差。
+
+## 工作流二：Fiction Editor（小說編輯）
+
+三位文學編輯平行審稿 + Editor-in-Chief 綜合改稿。專用於小說章節、短篇故事修改。
+
+```
+使用者提供原文
+    │
+    ▼
+  Phase 1: 三位編輯平行評審
+    Plot Editor (結構/節奏/場景邏輯)
+    Character Editor (人物/對白/情感)
+    Prose Editor (文筆/意象/句式)
+    │
+    ▼
+  Phase 2: Editor-in-Chief 綜合分析
+    共識意見 / 分歧觀點 / 優先修改項目
+    │
+    ▼
+  Phase 3: 產出最終版本
+    評審摘要 + 修改後全文
+```
+
+### 三種編輯視角（極省版）
+
+| 編輯 | 模型 | 審查重點 | 成本 |
+|------|------|---------|------|
+| `fusion-fiction-plot` | DeepSeek V4 Flash | 情節結構、節奏、場景邏輯 | $0.14/$0.28 |
+| `fusion-fiction-character` | Qwen3.7 Plus | 人物一致性、情感深度、對白 | $0.40/$1.60 |
+| `fusion-fiction-prose` | MiMo V2.5 | 文筆風格、意象、句式節奏 | $0.14/$0.28 |
+| Judge | DeepSeek V4 Pro | 總編輯，綜合改稿 | — |
+
+> 每輪成本約 **$0.68 in / ~$2.16 out**，靠 Qwen3.7 Plus 撐中文人物品質，比旗艦版便宜 7 倍。
+
+### 使用範例
+
+```
+請幫我 review 這篇小說第三章，給修改建議後產出最終版
+
+[貼上章節內容]
+```
+
+## 四種方案比較
+
+| 方案 | Judge | Panel 1 | Panel 2 | Panel 3 | 每輪成本 | 適用 |
+|------|-------|---------|---------|---------|---------|------|
+| **A 旗艦** | V4 Pro | K2.7 Code | Qwen3.7 Max | GLM-5.2 | ~$4.84/$14.90 | 最高品質研究 |
+| **B 性價比** ⭐ | V4 Pro | K2.7 Code | MiMo V2.5 | V4 Flash | ~$1.23/$4.56 | 日常使用 |
+| **C Self-Fusion** | V4 Pro | V4 Pro(A) | V4 Pro(B) | — | ~$1.74/$3.48 | 快速驗證 |
+| **D 均衡** | GLM-5.2 | V4 Pro | K2.6 | Qwen3.7+ | 視配置 | 平衡方案 |
+
+> B 方案約為 A 方案的 25% 成本，對標 Fusion 研究中 Gemini Flash + Kimi + DeepSeek 的 64.7% 路線。
+
+## 切換方案
+
+編輯 `opencode.jsonc` 中 panel agent 的 `model` 欄位，重啟生效。
+
+```jsonc
+"fusion-kimi": {
+  "model": "opencode-go/kimi-k2.7-code"
+},
+"fusion-qwen": {
+  "model": "opencode-go/qwen3.7-max"
+}
+```
+
+## 注意事項
+
+### Judge 偏差
+- Judge（DeepSeek V4 Pro）不得與 Panel 使用同架構模型
+- 同型號偏差 10~25 分；V4 Flash/V4 Pro 為不同訓練變體，偏差較輕微
+- Self-Fusion（方案 C）故意接受偏差換取速度
+
+### 其他
+- Fusion 延遲約為普通請求 2-3 倍（平行派遣可緩解）
+- 部分 panel 失敗時仍產出分析，標註失敗模型
+- 所有合成結論標註各觀點來源
+
+## 效能參考（DRACO Benchmark）
+
+| 組合 | 分數 |
+|------|------|
+| Fusion 旗艦 (Fable 5 + GPT-5.5) | **69.0%** |
+| Fusion 三模型 (Opus 4.8 + GPT-5.5 + Gemini 3.1 Pro) | **68.3%** |
+| Fusion 雙模型 (Opus 4.8 + GPT-5.5) | **67.6%** |
+| 單一最強 Claude Fable 5 | 65.3% |
+| Fusion 平價 (Gemini Flash + Kimi + DeepSeek) | **64.7%** |
+| 單一基準 DeepSeek V4 Pro | 60.3% |
+
+## 參考資料
+
+- [OpenRouter Fusion Blog](https://openrouter.ai/blog/announcements/fusion-beats-frontier/)
+- [opencode-go 文檔](https://opencode.ai/docs/go/)
+- [opencode Agent 文檔](https://opencode.ai/docs/agents/)
+- [opencode Skill 文檔](https://opencode.ai/docs/skills/)
+- [DRACO Benchmark (arXiv)](https://arxiv.org/abs/2602.11685)
