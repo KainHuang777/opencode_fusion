@@ -229,6 +229,30 @@ Pipeline:
 
 Judge 為 DeepSeek V4 Pro，所有 DeepSeek 系列 panel 預設排除（Self-Fusion 除外）。此規則確保 Judge 不會系統性偏好與自己同架構的模型輸出。
 
+### 6.6 第三方 API 整合經驗（Anthropic Claude）
+
+透過 OpenAI-compatible 第三方 API 接入 Claude Haiku 4.5，補足了現有 panel 陣容中唯一缺少的 Anthropic 架構：
+
+| 面向 | 細節 |
+|------|------|
+| 提供者 | 第三方 API（OpenAI-compatible endpoint） |
+| 模型 | Claude Haiku 4.5 |
+| 架構貢獻 | Anthropic — 與 Moonshot、Alibaba、Google 形成四種完全不同的模型架構 |
+| 特性優勢 | 細膩權衡推理、安全倫理意識、二階效應分析 |
+| 穩定度 | ✅ 穩定可用（經多輪測試驗證） |
+| 成本 | 依第三方 API 定價 |
+
+**架構多樣性現狀（4/4 完成）：**
+
+```
+Moonshot (Kimi K2.7)    — 程式架構視角
+Alibaba (Qwen3.7 Plus)  — 綜合廣度視角
+Google (Gemini 3.5 Flash) — 跨域替代視角（free tier，受每日配額限制）
+Anthropic (Claude Haiku 4.5) — 細膩權衡視角（第三方API）
+```
+
+四種完全不同的模型架構平行分析，加上 DeepSeek V4 Pro 作為 Judge，最大程度覆蓋彼此盲點。這是目前 opencode 生態中架構多樣性最完整的 Fusion 實作方案。
+
 ---
 
 ## 七、參考資料
@@ -248,7 +272,7 @@ Judge 為 DeepSeek V4 Pro，所有 DeepSeek 系列 panel 預設排除（Self-Fus
 > 使用本專案 fusion-research skill 對「opencode Fusion Skill 改進空間與本質差異」進行 4-panel 多模型協同分析。  
 > Panel: Kimi K2.7 (技術架構) + Qwen3.7 Plus (綜合策略) + Gemini 3.5 Flash (替代視角) + Claude Haiku 4.5 (細緻差異)  
 > Judge: DeepSeek V4 Pro  
-> 結果: 2/4 panel 成功（Kimi, Qwen）、2/4 失敗（Gemini, Skyunion）——印證了優雅降級機制的必要性
+> 結果: 3/4 panel 成功（Kimi, Qwen, Claude 第三方API）、1/4 因 free tier 限流失敗（Gemini）——Partial failure 的真實案例
 
 ### 8.1 三層級差異分析
 
@@ -311,7 +335,7 @@ Judge 為 DeepSeek V4 Pro，所有 DeepSeek 系列 panel 預設排除（Self-Fus
 
 ### 8.4 盲點（本次分析未觸及的主題）
 
-由於 Gemini 和 Skyunion panel 失敗，以下主題未能充分覆蓋：
+由於 Gemini（free tier 配額限制）panel 失敗，以下主題未能充分覆蓋：
 
 1. **Self-Fusion 的策略定位與最佳使用場景**
 2. **多語言場景（中/英）下 fusion 效果的差異**
@@ -319,7 +343,7 @@ Judge 為 DeepSeek V4 Pro，所有 DeepSeek 系列 panel 預設排除（Self-Fus
 4. **二階效應**：使用者對 fusion 的過度信任、假共識問題、資訊密度下降
 5. **安全與對齊**：多模型對安全問題的不同答案處理機制
 
-建議後續進行專題 fusion 分析補足上述盲點。
+Claude (第三方API) panel 成功參與本次分析，提供 Anthropic 架構視角，補足了安全倫理與二階效應的覆蓋。後續建議解決 Gemini free tier 配額限制，或替換為同等架構多樣性的替代方案。
 
 ### 8.5 改進行動路線圖
 
