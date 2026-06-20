@@ -1,0 +1,14 @@
+# opencode local state
+.opencode/local/
+
+# secrets
+.env
+.env.*
+*.key
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node (if ever used)
+node_modules/
