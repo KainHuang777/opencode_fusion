@@ -2,6 +2,16 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode-go/deepseek-v4-pro",
 
+  "provider": {
+    "skyunion": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "第三方API",
+      "options": {
+        "baseURL": "https://crs.skyunion.net/v1"
+      }
+    }
+  },
+
   "skills": {
     "paths": [".opencode/skills"]
   },
@@ -21,9 +31,9 @@
     },
     "fusion-qwen": {
       "mode": "subagent",
-      "model": "opencode-go/qwen3.7-max",
+      "model": "opencode-go/qwen3.7-plus",
       "hidden": true,
-      "description": "Fusion panel: Qwen3.7 Max — comprehensive analysis, broad context, strategy"
+      "description": "Fusion panel: Qwen3.7 Plus — comprehensive analysis, broad context, strategy (budget tier)"
     },
     "fusion-glm": {
       "mode": "subagent",
@@ -31,6 +41,19 @@
       "hidden": true,
       "description": "Fusion panel: GLM-5.2 — creative thinking, alternative angles, counterarguments"
     },
+    "fusion-gemini": {
+      "mode": "subagent",
+      "model": "google/gemini-3.5-flash",
+      "hidden": true,
+      "description": "Fusion panel: Gemini 3.5 Flash (free tier) — Google architecture diversity, alternative framing, blind spot detection"
+    },
+    "fusion-skyunion": {
+      "mode": "subagent",
+      "model": "skyunion/claude-haiku-4-5-20251001",
+      "hidden": true,
+      "description": "Fusion panel: Claude Haiku 4.5 (第三方API) — Anthropic architecture diversity, nuanced reasoning, safety perspective"
+    },
+
     "fusion-budget-ds": {
       "mode": "subagent",
       "model": "opencode-go/deepseek-v4-flash",

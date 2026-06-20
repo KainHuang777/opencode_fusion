@@ -127,14 +127,22 @@ After producing the final answer, briefly self-evaluate:
 |-----------|-------|----------|-------------|-------------|
 | `fusion-deepseek` | opencode-go/deepseek-v4-pro | Technical depth, code reasoning | $1.74/$3.48 per 1M | ⚠️ Conflicts if Judge = DeepSeek |
 | `fusion-kimi` | opencode-go/kimi-k2.7-code | Code architecture, logic flow | $0.95/$4.00 per 1M | ✅ All judges |
-| `fusion-qwen` | opencode-go/qwen3.7-max | Comprehensive analysis, broad context | $2.50/$7.50 per 1M | ✅ All judges |
+| `fusion-qwen` | opencode-go/qwen3.7-plus | Comprehensive analysis, broad context | $0.40/$1.60 per 1M | ✅ All judges |
 | `fusion-glm` | opencode-go/glm-5.2 | Creative thinking, alternative angles | $1.40/$4.40 per 1M | ✅ All judges |
+| `fusion-gemini` | google/gemini-3.5-flash | Google diversity, alternative framing | Free tier (API key) | ✅ All judges |
+| `fusion-skyunion` | claude-haiku-4-5-20251001 (第三方API) | Anthropic diversity, nuanced reasoning | Via 第三方API | ✅ All judges |
 | `fusion-budget-ds` | opencode-go/deepseek-v4-flash | Fast budget analysis | $0.14/$0.28 per 1M | ⚠️ Conflicts if Judge = DeepSeek |
 | `fusion-budget-mimo` | opencode-go/mimo-v2.5 | Budget broad coverage | $0.14/$0.28 per 1M | ✅ All judges |
 
 ### Perspective Assignment (default Judge = DeepSeek V4 Pro):
 
-**Budget (default):
+**Free Tier (default):
+- **4-panel free**: fusion-kimi (code architecture) + fusion-qwen (broad/comprehensive) + fusion-gemini (Google diversity, free tier) + fusion-skyunion (Anthropic diversity)
+  *(4 different architectures: Moonshot, Alibaba, Google, Anthropic. Cost: ~$1.35/$5.60 on opencode-go, Gemini free, 第三方API per pricing.)*
+- **3-panel free**: fusion-kimi (code architecture) + fusion-qwen (broad/comprehensive) + fusion-gemini (Google diversity, free tier)
+- **2-panel free**: fusion-kimi (technical) + fusion-qwen (comprehensive)
+
+**Budget:
 - **3-panel budget**: fusion-kimi (technical) + fusion-budget-mimo (broad) + fusion-budget-ds (fast universal)
   *(Note: fusion-budget-ds is DeepSeek V4 Flash, same family as Judge. Judge bias is mild since Flash/Pro are different training variants — acceptable for budget.)*
 - **2-panel budget**: fusion-kimi (technical) + fusion-budget-mimo (broad)

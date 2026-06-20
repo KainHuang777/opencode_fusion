@@ -22,7 +22,15 @@
 opencode models
 # 若無 → /connect → 選 OpenCode Go → 輸入 API key
 
-# 2. 重啟 opencode（配置啟動時載入）
+# 2. 接入 Google Gemini（free tier，可選）
+# 前往 https://aistudio.google.com/apikey 取得 API Key
+# opencode 內 → /connect → 選 Google → 貼上 API Key
+
+# 3. 接入 Claude Haiku 4.5（第三方API，可選）
+# 取得 API Key，設定 endpoint（OpenAI-compatible）
+# opencode 內 → /connect → 選對應 provider → 貼上 API Key + 端點
+
+# 4. 重啟 opencode（配置啟動時載入）
 opencode
 ```
 
@@ -37,8 +45,10 @@ E:\WORK\Fusion\
     ├── agents/
     │   ├── fusion-deepseek.md       # [Research] 技術深度 Panel (V4 Pro)
     │   ├── fusion-kimi.md           # [Research] 架構分析 Panel (K2.7 Code)
-    │   ├── fusion-qwen.md           # [Research] 綜合分析 Panel (Qwen3.7 Max)
-    │   ├── fusion-glm.md            # [Research] 創意思考 Panel (GLM-5.2)
+│   ├── fusion-qwen.md           # [Research] 綜合分析 Panel (Qwen3.7 Plus)
+│   ├── fusion-glm.md            # [Research] 創意思考 Panel (GLM-5.2)
+│   ├── fusion-gemini.md         # [Research] Google 多樣性 Panel (Gemini 3.5 Flash, free tier)
+│   ├── fusion-skyunion.md       # [Research] Anthropic 多樣性 Panel (Claude Haiku 4.5, 第三方API)
     │   ├── fusion-budget-ds.md      # [Research] 平價 Panel (V4 Flash)
     │   ├── fusion-budget-mimo.md    # [Research] 平價 Panel (MiMo V2.5)
     │   ├── fusion-fiction-plot.md   # [Fiction] 結構編輯 (V4 Flash)
@@ -74,8 +84,10 @@ E:\WORK\Fusion\
 |------|------|------|------|-----------|
 | `fusion-deepseek` | V4 Pro | 技術深度、邏輯推理 | $1.74/$3.48 | ⚠️ 衝突 |
 | `fusion-kimi` | K2.7 Code | 程式架構、實作思維 | $0.95/$4.00 | ✅ |
-| `fusion-qwen` | Qwen3.7 Max | 綜合分析、廣度覆蓋 | $2.50/$7.50 | ✅ |
+| `fusion-qwen` | Qwen3.7 Plus | 綜合分析、廣度覆蓋 | $0.40/$1.60 | ✅ |
 | `fusion-glm` | GLM-5.2 | 創意思考、反向論證 | $1.40/$4.40 | ✅ |
+| `fusion-gemini` | Gemini 3.5 Flash | Google 架構多樣性 | Free tier | ✅ |
+| `fusion-skyunion` | Claude Haiku 4.5 | Anthropic 架構、細膩推理 | 第三方API | ✅ |
 | `fusion-budget-ds` | V4 Flash | 快速技術分析 | $0.14/$0.28 | ⚠️ 衝突 |
 | `fusion-budget-mimo` | MiMo V2.5 | 廣度快速覆蓋 | $0.14/$0.28 | ✅ |
 
@@ -122,16 +134,16 @@ E:\WORK\Fusion\
 [貼上章節內容]
 ```
 
-## 四種方案比較
+## 方案比較
 
-| 方案 | Judge | Panel 1 | Panel 2 | Panel 3 | 每輪成本 | 適用 |
-|------|-------|---------|---------|---------|---------|------|
-| **A 旗艦** | V4 Pro | K2.7 Code | Qwen3.7 Max | GLM-5.2 | ~$4.84/$14.90 | 最高品質研究 |
-| **B 性價比** ⭐ | V4 Pro | K2.7 Code | MiMo V2.5 | V4 Flash | ~$1.23/$4.56 | 日常使用 |
-| **C Self-Fusion** | V4 Pro | V4 Pro(A) | V4 Pro(B) | — | ~$1.74/$3.48 | 快速驗證 |
-| **D 均衡** | GLM-5.2 | V4 Pro | K2.6 | Qwen3.7+ | 視配置 | 平衡方案 |
+| 方案 | Judge | Panel 1 | Panel 2 | Panel 3 | Panel 4 | 每輪成本 | 適用 |
+|------|-------|---------|---------|---------|---------|---------|------|
+| **A Free Tier** ⭐ | V4 Pro | K2.7 Code | Qwen3.7 Plus | Gemini 3.5 Flash | Claude Haiku 4.5 | ~$1.35/$5.60 + free + 第三方API | 日常使用（預設） |
+| **B 旗艦** | V4 Pro | K2.7 Code | Qwen3.7 Plus | GLM-5.2 | — | ~$2.75/$11.00 | 最高品質研究 |
+| **C 全 Go 平價** | V4 Pro | K2.7 Code | MiMo V2.5 | V4 Flash | — | ~$1.23/$4.56 | 無 Gemini 時 |
+| **D Self-Fusion** | V4 Pro | V4 Pro(A) | V4 Pro(B) | — | — | ~$1.74/$3.48 | 快速驗證 |
 
-> B 方案約為 A 方案的 25% 成本，對標 Fusion 研究中 Gemini Flash + Kimi + DeepSeek 的 64.7% 路線。
+> A 方案為預設 free tier 組合：四種不同架構（Moonshot, Alibaba, Google, Anthropic）。Gemini 3.5 Flash 經 Google AI Studio free API key 接入，Claude Haiku 4.5 經第三方API接入。
 
 ## 切換方案
 
@@ -142,7 +154,10 @@ E:\WORK\Fusion\
   "model": "opencode-go/kimi-k2.7-code"
 },
 "fusion-qwen": {
-  "model": "opencode-go/qwen3.7-max"
+  "model": "opencode-go/qwen3.7-plus"
+},
+"fusion-skyunion": {
+  "model": "第三方-provider/claude-haiku-4-5-20251001"  // 依你的第三方API provider 設定
 }
 ```
 

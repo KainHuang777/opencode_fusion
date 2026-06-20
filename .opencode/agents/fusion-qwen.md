@@ -1,7 +1,7 @@
 ---
-description: Fusion panel agent using Qwen3.7 Max. Provides comprehensive analysis, broad context, and strategic perspective. Use when dispatching multi-model fusion analysis.
+description: Fusion panel agent using Qwen3.7 Plus (budget). Provides comprehensive analysis, broad context, and strategic perspective. Use when dispatching multi-model fusion analysis.
 mode: subagent
-model: opencode-go/qwen3.7-max
+model: opencode-go/qwen3.7-plus
 hidden: true
 steps: 5
 permission:
