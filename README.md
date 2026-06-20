@@ -134,6 +134,49 @@ E:\WORK\Fusion\
 [貼上章節內容]
 ```
 
+### 在其他小說專案中使用
+
+將 Fiction Editor 應用於獨立小說專案：
+
+1. **複製以下檔案** 到小說專案的對應位置：
+
+   | 來源 (opencode_fusion) | 目的地 (小說專案) |
+   |---|---|
+   | `.opencode/agents/fusion-fiction-plot.md` | `.opencode/agents/fusion-fiction-plot.md` |
+   | `.opencode/agents/fusion-fiction-character.md` | `.opencode/agents/fusion-fiction-character.md` |
+   | `.opencode/agents/fusion-fiction-prose.md` | `.opencode/agents/fusion-fiction-prose.md` |
+   | `.opencode/skills/fiction-editor/SKILL.md` | `.opencode/skills/fiction-editor/SKILL.md` |
+
+2. **小說專案的 opencode.jsonc** 加入以下註冊：
+
+   ```jsonc
+   "agent": {
+     "fusion-fiction-plot": {
+       "mode": "subagent",
+       "model": "opencode-go/deepseek-v4-flash",
+       "hidden": true,
+       "permission": { "edit": "deny" }
+     },
+     "fusion-fiction-character": {
+       "mode": "subagent",
+       "model": "opencode-go/qwen3.7-plus",
+       "hidden": true,
+       "permission": { "edit": "deny" }
+     },
+     "fusion-fiction-prose": {
+       "mode": "subagent",
+       "model": "opencode-go/mimo-v2.5",
+       "hidden": true,
+       "permission": { "edit": "deny" }
+     }
+   },
+   "skills": {
+     "paths": [".opencode/skills"]
+   }
+   ```
+
+3. 重啟 opencode，小說專案即可獨立使用 Fiction Editor 工作流。
+
 ## 方案比較
 
 | 方案 | Judge | Panel 1 | Panel 2 | Panel 3 | Panel 4 | 每輪成本 | 適用 |
