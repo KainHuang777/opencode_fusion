@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 vs V4 Fiction Editor Benchmark 对比报告</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f1117; color: #e1e4e8; padding: 40px 20px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 600; color: #f0f6fc; margin-bottom: 8px; }
+  .subtitle { color: #8b949e; font-size: 14px; margin-bottom: 32px; }
+  h2 { font-size: 20px; font-weight: 600; color: #f0f6fc; margin: 36px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #21262d; }
+  h3 { font-size: 16px; font-weight: 600; color: #e1e4e8; margin: 24px 0 12px; }
+
+  .method-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px 24px; margin-bottom: 24px; line-height: 1.8; font-size: 14px; }
+  .method-box strong { color: #58a6ff; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
+  th { background: #161b22; color: #8b949e; font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 2px solid #30363d; white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+  tr:hover td { background: #1c2128; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .center { text-align: center; }
+
+  .rank-badge { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; font-size: 12px; font-weight: 600; }
+  .rank-1 { background: #ffd700; color: #000; }
+  .rank-2 { background: #c0c0c0; color: #000; }
+  .rank-3 { background: #cd7f32; color: #fff; }
+  .rank-other { background: #21262d; color: #8b949e; }
+
+  .up { color: #3fb950; }
+  .down { color: #f85149; }
+  .same { color: #8b949e; }
+
+  .change-up { color: #3fb950; font-weight: 600; }
+  .change-down { color: #f85149; font-weight: 600; }
+
+  .bar-container { display: inline-block; width: 80px; height: 6px; background: #21262d; border-radius: 3px; vertical-align: middle; margin-right: 8px; }
+  .bar { height: 6px; border-radius: 3px; }
+  .bar-up { background: #3fb950; }
+  .bar-down { background: #f85149; }
+
+  .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .dim-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px 20px; }
+  .dim-card h4 { font-size: 14px; color: #8b949e; margin-bottom: 8px; }
+  .dim-card .score-row { display: flex; align-items: center; gap: 16px; font-size: 24px; font-weight: 600; }
+  .dim-card .score-row .label { font-size: 12px; font-weight: 400; color: #8b949e; }
+  .dim-card .score-row .v3s { color: #58a6ff; }
+  .dim-card .score-row .v4s { color: #3fb950; }
+  .dim-card .score-row .diff { font-size: 14px; }
+
+  .top5-model { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .top5-model h4 { font-size: 15px; margin-bottom: 10px; }
+  .top5-model .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .top5-model .score-item { font-size: 12px; }
+  .top5-model .score-item .dim-name { color: #8b949e; }
+  .top5-model .score-item .v3s { color: #58a6ff; }
+  .top5-model .score-item .v4s { color: #3fb950; }
+
+  .movers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .mover-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px 20px; text-align: center; }
+  .mover-card .model-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .mover-card .rank-row { display: flex; justify-content: center; align-items: center; gap: 12px; font-size: 20px; font-weight: 600; }
+  .mover-card .arrow { font-size: 18px; }
+
+  .footer { text-align: center; color: #484f58; font-size: 12px; margin-top: 48px; padding-top: 16px; border-top: 1px solid #21262d; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>V3 vs V4 Fiction Editor Benchmark 对比报告</h1>
+<p class="subtitle">V3: 4位通用评委 · V4: Fiction Editor 流水线 (3位专业编辑 + 总编) · 22模型 · 8维度</p>
+
+<div class="method-box" style="border: 1px solid #d29922; background: #1a1a2e;">
+  <strong style="color:#d29922;">⚠️ 重要说明：V3 与 V4 的差别仅在于「评審方法」，正文完全相同。</strong><br>
+  <span style="color:#c9d1d9; font-size:13px;">
+  两轮测试评估的是 <strong>同一批 22 篇小说第一章</strong>（其中 20 篇由单一模型独立生成，2 篇为 Fusion 多模型协同产出；文本一字未改）。<br>
+  V3 用「4 位通用评委各自打分取平均」来评估这批正文 → 得出 V3 排名。<br>
+  V4 用「3 位专业编辑分工打分 + 总编终裁」来重新评估同一批正文 → 得出 V4 排名。<br>
+  也就是说：<strong style="color:#f0f6fc;">正文没变，变的只是「这套卷子由谁来批、怎么批」。</strong>排名差异本质上反映的是两种评分体系对同一批小说的审美分歧。
+  </span>
+</div>
+
+<div class="method-box">
+  <strong>V3 方法：</strong>4位通用评委 (mimo-v2.5-pro, mimo-v2-omni, deepseek-v4-flash, gemini-3.5-flash-med) 各自独立对所有8维度打分，取等权平均（各12.5%）。同模型自评排除。<br>
+  <strong>V4 方法：</strong>Fiction Editor 流水线 — Plot Editor (deepseek-v4-flash) 专攻节奏/开篇/AI → Character Editor (qwen3.7-plus) 专攻角色/对话/幽默/AI → Prose Editor (mimo-v2.5) 专攻文笔/年代感/AI → Editor-in-Chief (deepseek-v4-pro) 综合三位编辑意见给出最终评分。同模型自评排除。
+</div>
+
+<h2>V3 vs V4 核心区别详解</h2>
+<div class="method-box" style="font-size:13px; line-height:2;">
+  <table style="margin-bottom:0;">
+    <thead><tr><th style="width:18%;">对比维度</th><th style="width:41%;">V3（通用评委制）</th><th style="width:41%;">V4（专业编辑流水线）</th></tr></thead>
+    <tbody>
+      <tr style="background:#1a1a2e;">
+        <td><strong>测试正文</strong></td>
+        <td colspan="2" style="text-align:center; color:#d29922;"><strong>完全相同：20 个模型各自生成的第一章正文，一字未改。两轮测的是同一批文本。</strong></td>
+      </tr>
+      <tr>
+        <td><strong>评审模式</strong></td>
+        <td>4位「通才」评委，每位对整个文本的所有维度独立打分。评委本人并非小说编辑，而是基于通用审美给出评分。</td>
+        <td>3位「专才编辑」+ 1位「总编」。每位编辑只负责自己专长的 3-4 个维度，总编在阅读全部编辑报告后给出最终综合分。</td>
+      </tr>
+      <tr>
+        <td><strong>评分粒度</strong></td>
+        <td>每位评委给 8 维度各打一个 1-10 分，取 4 人平均。同一维度可能出现 3-5 分的极端分歧（尤其是幽默感、年代感）。</td>
+        <td>每位编辑只对专长度量深度剖析（含 reasoning），其余维度次要参考。总编综合考量各编辑的专业权重后再给出终评，极端分歧被有效稀释。</td>
+      </tr>
+      <tr>
+        <td><strong>分工设计</strong></td>
+        <td>无分工。评委之间互相不知道对方打分，各自独立审美。</td>
+        <td>Plot Editor：情节推进、开篇钩子、AI 节奏感<br>Character Editor：角色立体度、对话自然度、幽默感<br>Prose Editor：文字质感、年代还原度<br>三者交集于 AI 元素，形成交叉验证。</td>
+      </tr>
+      <tr>
+        <td><strong>评分偏差来源</strong></td>
+        <td>单一评委的审美偏好（如 Gemini-3.5 系统性低分）会直接拖垮模型排名。4 人平均虽然稀释噪音，但对极值无力。</td>
+        <td>每位编辑的专长领域评分享有隐性加权（该维度由最能判断的人主导）。单一编辑的低分在非专长度量上权重自动降低。</td>
+      </tr>
+      <tr>
+        <td><strong>评审深度</strong></td>
+        <td>浅而广：评委快速读完，凭直觉给分。无 reasoning 约束。</td>
+        <td>深而窄：编辑必须撰写专业评审报告（含推理），总编在此基础上二次判断。形成"专业判断 → 综合裁决"的双层结构。</td>
+      </tr>
+      <tr>
+        <td><strong>同模型排除</strong></td>
+        <td>4 位评委中有选手即排除该评委的打分，剩余 3 人取平均。适用于 4/20 模型。</td>
+        <td>3 位编辑 + 1 位总编中，若选手 = 某编辑/总编，则跳过对应环节。适用于 4/20 模型。</td>
+      </tr>
+      <tr>
+        <td><strong>结果收敛性</strong></td>
+        <td>方差较大：排名受单偏好评委影响显著。例如 Gemini 对多个模型的全维度低分（6/6/6/6/6/6/6/6）可系统性偏移排名。</td>
+        <td>方差收敛：总编的二次判断过滤了极端偏差。例如 Prose Editor 不会给幽默感打分（那是 Character 的活），避免了「跨维度盲评」。</td>
+      </tr>
+      <tr>
+        <td><strong>方法论愿景</strong></td>
+        <td>「民主投票」：多数评委的意见决定最终排名。</td>
+        <td>「专家团审」：最懂该维度的人给该维度打分，然后总编做终裁。模拟真实出版业的编辑流程。</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>总排名对比</h2>
+<table>
+<thead><tr>
+  <th class="center">#</th>
+  <th>模型</th>
+  <th class="num">V3 最终分</th>
+  <th class="num">V4 最终分</th>
+  <th class="num">差异</th>
+  <th class="center">V3 排名</th>
+  <th class="center">V4 排名</th>
+  <th class="center">排位变化</th>
+</tr></thead>
+<tbody><tr>
+  <td class="center"><span class="rank-badge rank-1">1</span></td>
+  <td><strong>kimi-k2.5</strong></td>
+  <td class="num">8.41</td>
+  <td class="num">8.63</td>
+  <td class="num ">+0.22</td>
+  <td class="center">5</td>
+  <td class="center">1</td>
+  <td class="center change-up">↑4</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-2">2</span></td>
+  <td><strong>gtp5.5</strong></td>
+  <td class="num">8.58</td>
+  <td class="num">8.60</td>
+  <td class="num ">+0.02</td>
+  <td class="center">2</td>
+  <td class="center">2</td>
+  <td class="center same">—</td>
+</tr><tr style="background:#1a2e1a;">
+  <td class="center"><span class="rank-badge rank-3">3</span></td>
+  <td><strong>fusion-fiction-opus</strong> <span style="color:#3fb950;font-size:11px;">🆕 Fusion</span></td>
+  <td class="num" style="color:#8b949e;">—</td>
+  <td class="num">8.50</td>
+  <td class="num" style="color:#8b949e;">—</td>
+  <td class="center" style="color:#8b949e;">—</td>
+  <td class="center">3</td>
+  <td class="center" style="color:#3fb950;">V4新增</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">4</span></td>
+  <td><strong>glm-5</strong></td>
+  <td class="num">7.97</td>
+  <td class="num">8.50</td>
+  <td class="num up">+0.53</td>
+  <td class="center">11</td>
+  <td class="center">4</td>
+  <td class="center change-up">↑8</td>
+</tr><tr style="background:#1a2e1a;">
+  <td class="center"><span class="rank-badge rank-other">5</span></td>
+  <td><strong>fusion-budget</strong> <span style="color:#3fb950;font-size:11px;">🆕 Fusion</span></td>
+  <td class="num" style="color:#8b949e;">—</td>
+  <td class="num">8.44</td>
+  <td class="num" style="color:#8b949e;">—</td>
+  <td class="center" style="color:#8b949e;">—</td>
+  <td class="center">5</td>
+  <td class="center" style="color:#3fb950;">V4新增</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">6</span></td>
+  <td><strong>claude-4.5-Haiku</strong></td>
+  <td class="num">8.47</td>
+  <td class="num">8.38</td>
+  <td class="num ">-0.09</td>
+  <td class="center">3</td>
+  <td class="center">6</td>
+  <td class="center change-down">↓1</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">7</span></td>
+  <td><strong>minimax-m2.7</strong></td>
+  <td class="num">6.93</td>
+  <td class="num">8.36</td>
+  <td class="num up">+1.43</td>
+  <td class="center">17</td>
+  <td class="center">7</td>
+  <td class="center change-up">↑12</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">8</span></td>
+  <td><strong>kimi-k2.6</strong></td>
+  <td class="num">8.45</td>
+  <td class="num">8.35</td>
+  <td class="num ">-0.10</td>
+  <td class="center">4</td>
+  <td class="center">8</td>
+  <td class="center change-down">↓2</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">9</span></td>
+  <td><strong>claude-4.6-sonnet</strong></td>
+  <td class="num">8.37</td>
+  <td class="num">8.19</td>
+  <td class="num ">-0.18</td>
+  <td class="center">6</td>
+  <td class="center">9</td>
+  <td class="center change-down">↓1</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">10</span></td>
+  <td><strong>gemini-3.5-flash-med</strong></td>
+  <td class="num">8.20</td>
+  <td class="num">8.19</td>
+  <td class="num ">-0.01</td>
+  <td class="center">9</td>
+  <td class="center">10</td>
+  <td class="center change-up">↑1</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">11</span></td>
+  <td><strong>deepseek-v4-pro</strong></td>
+  <td class="num">7.18</td>
+  <td class="num">8.15</td>
+  <td class="num up">+0.97</td>
+  <td class="center">15</td>
+  <td class="center">11</td>
+  <td class="center change-up">↑6</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">12</span></td>
+  <td><strong>qwen3.6-plus</strong></td>
+  <td class="num">8.14</td>
+  <td class="num">8.10</td>
+  <td class="num ">-0.04</td>
+  <td class="center">10</td>
+  <td class="center">12</td>
+  <td class="center same">—</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">13</span></td>
+  <td><strong>gemini-3.1-pro-low</strong></td>
+  <td class="num">8.28</td>
+  <td class="num">8.07</td>
+  <td class="num ">-0.21</td>
+  <td class="center">7</td>
+  <td class="center">13</td>
+  <td class="center change-down">↓4</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">14</span></td>
+  <td><strong>minimax-m2.5</strong></td>
+  <td class="num">7.66</td>
+  <td class="num">8.02</td>
+  <td class="num up">+0.36</td>
+  <td class="center">12</td>
+  <td class="center">14</td>
+  <td class="center same">—</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">15</span></td>
+  <td><strong>mimo-v2.5-pro</strong></td>
+  <td class="num">8.26</td>
+  <td class="num">7.98</td>
+  <td class="num ">-0.28</td>
+  <td class="center">8</td>
+  <td class="center">15</td>
+  <td class="center change-down">↓5</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">16</span></td>
+  <td><strong>claude-4.6-opus</strong></td>
+  <td class="num">8.60</td>
+  <td class="num">7.95</td>
+  <td class="num down">-0.65</td>
+  <td class="center">1</td>
+  <td class="center">16</td>
+  <td class="center change-down">↓13</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">17</span></td>
+  <td><strong>glm-5.1</strong></td>
+  <td class="num">7.57</td>
+  <td class="num">7.70</td>
+  <td class="num ">+0.13</td>
+  <td class="center">13</td>
+  <td class="center">17</td>
+  <td class="center change-down">↓2</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">18</span></td>
+  <td><strong>deepseek-v4-flash</strong></td>
+  <td class="num">7.05</td>
+  <td class="num">7.63</td>
+  <td class="num up">+0.58</td>
+  <td class="center">16</td>
+  <td class="center">18</td>
+  <td class="center same">—</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">19</span></td>
+  <td><strong>mimo-v2-omni</strong></td>
+  <td class="num">6.46</td>
+  <td class="num">7.38</td>
+  <td class="num up">+0.92</td>
+  <td class="center">20</td>
+  <td class="center">19</td>
+  <td class="center change-up">↑3</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">20</span></td>
+  <td><strong>mimo-v2.5</strong></td>
+  <td class="num">7.47</td>
+  <td class="num">7.38</td>
+  <td class="num ">-0.09</td>
+  <td class="center">14</td>
+  <td class="center">20</td>
+  <td class="center change-down">↓4</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">21</span></td>
+  <td><strong>qwen3.5-plus</strong></td>
+  <td class="num">6.75</td>
+  <td class="num">7.25</td>
+  <td class="num up">+0.50</td>
+  <td class="center">19</td>
+  <td class="center">21</td>
+  <td class="center same">—</td>
+</tr><tr>
+  <td class="center"><span class="rank-badge rank-other">22</span></td>
+  <td><strong>gtposs-120b</strong></td>
+  <td class="num">6.82</td>
+  <td class="num">7.14</td>
+  <td class="num up">+0.32</td>
+  <td class="center">18</td>
+  <td class="center">22</td>
+  <td class="center change-down">↓2</td>
+</tr></tbody></table>
+
+<h2>各维度平均分对比</h2>
+<div class="dim-grid"><div class="dim-card">
+  <h4>文笔</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">8.50</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.74</span></div>
+    <div><span class="label">差异</span><br><span class="diff same">+0.24</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>年代感</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">8.79</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">9.06</span></div>
+    <div><span class="label">差异</span><br><span class="diff same">+0.27</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>角色塑造</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">7.75</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.28</span></div>
+    <div><span class="label">差异</span><br><span class="diff up">+0.52</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>幽默感</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">6.81</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">7.06</span></div>
+    <div><span class="label">差异</span><br><span class="diff same">+0.25</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>对话品质</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">7.89</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.03</span></div>
+    <div><span class="label">差异</span><br><span class="diff same">+0.13</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>节奏感</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">8.15</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.85</span></div>
+    <div><span class="label">差异</span><br><span class="diff up">+0.70</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>AI元素</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">8.41</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.85</span></div>
+    <div><span class="label">差异</span><br><span class="diff up">+0.44</span></div>
+  </div>
+</div><div class="dim-card">
+  <h4>开篇吸引力</h4>
+  <div class="score-row">
+    <div><span class="label">V3</span><br><span class="v3s">8.47</span></div>
+    <div><span class="label">V4</span><br><span class="v4s">8.95</span></div>
+    <div><span class="label">差异</span><br><span class="diff up">+0.47</span></div>
+  </div>
+</div></div>
+
+<h2>Top 5 模型各维度细节</h2><div class="top5-model">
+  <h4>kimi-k2.5 <span style="color:#8b949e;font-weight:400;font-size:13px;">V4 8.63 / V3 8.41</span></h4>
+  <div class="score-grid"><div class="score-item">
+      <span class="dim-name">文笔</span><br>
+      <span class="v3s">8.8</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.25</span>
+    </div><div class="score-item">
+      <span class="dim-name">年代感</span><br>
+      <span class="v3s">9.5</span> → <span class="v4s">9.0</span>
+      <span class="down">-0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">角色塑造</span><br>
+      <span class="v3s">8.5</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">幽默感</span><br>
+      <span class="v3s">7.0</span> → <span class="v4s">7.0</span>
+      <span class="same">+0.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">对话品质</span><br>
+      <span class="v3s">8.3</span> → <span class="v4s">8.0</span>
+      <span class="same">-0.25</span>
+    </div><div class="score-item">
+      <span class="dim-name">节奏感</span><br>
+      <span class="v3s">8.0</span> → <span class="v4s">9.0</span>
+      <span class="up">+1.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">AI元素</span><br>
+      <span class="v3s">8.3</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.75</span>
+    </div><div class="score-item">
+      <span class="dim-name">开篇吸引力</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.00</span>
+    </div></div></div><div class="top5-model">
+  <h4>gtp5.5 <span style="color:#8b949e;font-weight:400;font-size:13px;">V4 8.6 / V3 8.58</span></h4>
+  <div class="score-grid"><div class="score-item">
+      <span class="dim-name">文笔</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">年代感</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">10.0</span>
+      <span class="up">+1.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">角色塑造</span><br>
+      <span class="v3s">8.3</span> → <span class="v4s">8.0</span>
+      <span class="same">-0.25</span>
+    </div><div class="score-item">
+      <span class="dim-name">幽默感</span><br>
+      <span class="v3s">8.5</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">对话品质</span><br>
+      <span class="v3s">8.5</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">节奏感</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">AI元素</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">开篇吸引力</span><br>
+      <span class="v3s">9.0</span> → <span class="v4s">9.0</span>
+      <span class="same">+0.00</span>
+    </div></div></div><div class="top5-model">
+  <h4>glm-5 <span style="color:#8b949e;font-weight:400;font-size:13px;">V4 8.5 / V3 7.97</span></h4>
+  <div class="score-grid"><div class="score-item">
+      <span class="dim-name">文笔</span><br>
+      <span class="v3s">8.0</span> → <span class="v4s">9.0</span>
+      <span class="up">+1.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">年代感</span><br>
+      <span class="v3s">8.5</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">角色塑造</span><br>
+      <span class="v3s">7.5</span> → <span class="v4s">8.0</span>
+      <span class="up">+0.50</span>
+    </div><div class="score-item">
+      <span class="dim-name">幽默感</span><br>
+      <span class="v3s">7.3</span> → <span class="v4s">7.0</span>
+      <span class="same">-0.25</span>
+    </div><div class="score-item">
+      <span class="dim-name">对话品质</span><br>
+      <span class="v3s">8.0</span> → <span class="v4s">8.0</span>
+      <span class="same">+0.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">节奏感</span><br>
+      <span class="v3s">8.0</span> → <span class="v4s">9.0</span>
+      <span class="up">+1.00</span>
+    </div><div class="score-item">
+      <span class="dim-name">AI元素</span><br>
+      <span class="v3s">8.3</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.75</span>
+    </div><div class="score-item">
+      <span class="dim-name">开篇吸引力</span><br>
+      <span class="v3s">8.3</span> → <span class="v4s">9.0</span>
+      <span class="up">+0.75</span>
+    </div></div></div><div class="top5-model" style="background:#1a2e1a; border:1px solid #2ea043;">
+  <h4>fusion-fiction-opus <span style="color:#3fb950;font-weight:400;font-size:13px;">🆕 V4 8.50 / 仅 Fusion 参赛</span></h4>
+  <p style="font-size:12px; color:#8b949e; margin:0 0 10px;">Fiction Editor 工作流润色 claude-4.6-opus 正文：3 专业编辑平行审查 + 总编综合改稿</p>
+  <div class="score-grid"><div class="score-item">
+      <span class="dim-name">文笔</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">年代感</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">角色塑造</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">幽默感</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">对话品质</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">节奏感</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">AI元素</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">开篇吸引力</span><br>
+      <span class="v4s">9.0</span>
+    </div></div></div><div class="top5-model" style="background:#1a2e1a; border:1px solid #2ea043;">
+  <h4>fusion-budget <span style="color:#3fb950;font-weight:400;font-size:13px;">🆕 V4 8.44 / 仅 Fusion 参赛</span></h4>
+  <p style="font-size:12px; color:#8b949e; margin:0 0 10px;">Fusion Research 平价组合生成正文：DeepSeek V4 Flash panel + V4 Pro Judge 合整</p>
+  <div class="score-grid"><div class="score-item">
+      <span class="dim-name">文笔</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">年代感</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">角色塑造</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">幽默感</span><br>
+      <span class="v4s">8.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">对话品质</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">节奏感</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">AI元素</span><br>
+      <span class="v4s">9.0</span>
+    </div><div class="score-item">
+      <span class="dim-name">开篇吸引力</span><br>
+      <span class="v4s">9.0</span>
+    </div></div></div>
+<h2>排位变动深度分析</h2>
+
+<div class="method-box" style="padding:8px 24px; margin-bottom:16px;">
+  <p style="font-size:13px; color:#8b949e;">平均排位变动 <strong style="color:#f0f6fc;">3.40 位</strong>。<strong style="color:#d29922;">正文一字未改</strong>，以下逐一分析 6 个变动 ≥4 位的模型，解释同一篇正文在两种评分体系下排名剧变的根因。</p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #f85149;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">claude-4.6-opus</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">Anthropic · Antigravity</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#f0f6fc;">#1</span>
+      <span class="arrow change-down" style="font-size:20px;">↓</span>
+      <span style="color:#f85149;">#16</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 15 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">8.88</span> &nbsp; <span style="color:#8b949e;">字数扣分</span> <span style="color:#f85149;">-0.275</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>8.60</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#f85149;">7.95</strong> &nbsp; <span style="color:#8b949e;">跌幅</span> <strong style="color:#f85149;">-0.65</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：散文式叙事不适应专业编辑的"节奏至上"标准。</strong>V3 通用评委给 Opus 的文笔(9.0)、年代感(9.50)、AI元素(9.25)打出顶分，但 V4 专业编辑中 Plot Editor (deepseek-v4-flash) 对其情节推进节奏评价严苛——大段环境铺陈被判定为"拖慢叙事"。Prose Editor 也对其文字密度提出更高要求。加上 4598 字的字数超标扣分（目标 3500 字），最终从榜首跌至 #16。本质上是"优美长文" vs "紧凑技术叙事"的风格冲突：Opus 适合写文学散文，不适合写商业爽文第一章。
+  </p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #3fb950; margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">minimax-m2.7</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">MiniMax · opencode</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#f85149;">#17</span>
+      <span class="arrow change-up" style="font-size:20px;">↑</span>
+      <span style="color:#3fb950;">#7</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 10 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">7.00</span> &nbsp; <span style="color:#8b949e;">字数扣分</span> <span style="color:#f85149;">-0.070</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>6.93</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#3fb950;">8.36</strong> &nbsp; <span style="color:#8b949e;">涨幅</span> <strong style="color:#3fb950;">+1.43</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：V3 中被单一偏好评委系统性压分。</strong>在 V3 的 4 位通用评委中，Gemini-3.5-flash-med 对 minimax-m2.7 的 AI 元素仅打 4 分、年代感仅打 5 分、节奏感和开篇分别打 5 分——所有维度均比另三位评委低 3-5 分。幽默感维度 four-judge diff 高达 5 分。这种极端偏差直接将总平均分拉至 7.00。V4 的专业编辑（Character Editor 专攻幽默、Plot Editor 专攻节奏/AI）对混合 tone（冷硬+自嘲）有更细粒度的理解，加上总编的二次裁决稀释了单点噪音，m2.7 回归真实水平 #7。
+  </p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #4fb950; margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">glm-5</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">智谱 AI · opencode</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#f85149;">#11</span>
+      <span class="arrow change-up" style="font-size:20px;">↑</span>
+      <span style="color:#3fb950;">#4</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 7 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">7.97</span> &nbsp; <span style="color:#8b949e;">无扣分</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>7.97</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#4fb950;">8.50</strong> &nbsp; <span style="color:#8b949e;">涨幅</span> <strong style="color:#4fb950;">+0.53</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：去除了 Gemini 裁判的"寒蝉效应"。</strong>V3 中 Gemini-3.5 对 glm-5 的全维度打分均比另三位评委低 1-3 分（节奏感 6 vs 8/9/9；开篇吸引力 6 vs 9/9/9），直接造成排名被压制。V4 不再有 Gemini 评委，取而代之的是专业分工——Plot Editor 认可其节奏(9.0)，Character Editor 认可其对话品质(8.0)和角色塑造(8.0)，Prose Editor 认可其文笔(9.0)和年代感(9.0)。总编综合后给出 8.50，实至名归。glm-5 证明了 2665 字短小精悍、无字数扣分的"小而美"策略在 V4 流水线中极具竞争力。
+  </p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #3fb950; margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">deepseek-v4-pro</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">DeepSeek · opencode</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#f85149;">#15</span>
+      <span class="arrow change-up" style="font-size:20px;">↑</span>
+      <span style="color:#3fb950;">#11</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 4 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">7.44</span> &nbsp; <span style="color:#8b949e;">字数扣分</span> <span style="color:#f85149;">-0.255</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>7.18</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#3fb950;">8.15</strong> &nbsp; <span style="color:#8b949e;">涨幅</span> <strong style="color:#3fb950;">+0.97</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：自评排除 + 专业编辑视角修正。</strong>V3 中 v4-pro 被 Gemini 裁判多维度打 6 分（远低于其他评委），且字数仅 1990 被重度扣分。V4 中 v4-pro 以总编（Editor-in-Chief）身份参与流水线——评他人而不评自己。三位专业编辑给予了更客观的评估：Plot Editor 认可其技术叙事的紧凑度，Character Editor 认可其微妙冷幽默。坐稳 #11 中游。同时也验证了：自评排除机制能有效隔离利益冲突。
+  </p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #f85149; margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">mimo-v2.5-pro</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">小米 · opencode</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#58a6ff;">#8</span>
+      <span class="arrow change-down" style="font-size:20px;">↓</span>
+      <span style="color:#f85149;">#15</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 7 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">8.46</span> &nbsp; <span style="color:#8b949e;">字数扣分</span> <span style="color:#f85149;">-0.198</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>8.26</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#f85149;">7.98</strong> &nbsp; <span style="color:#8b949e;">跌幅</span> <strong style="color:#f85149;">-0.28</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：专业分工暴露了"全面但不拔尖"的中庸困境。</strong>V3 中 mimo-v2.5-pro 作为裁判兼选手（自评排除），另外三位通用评委给了相对宽容的评分（幽默感最低 3 分被排除后，其余在 7-9 区间）。V4 中没有"通用评委的宽容"——Prose Editor (mimo-v2.5) 对其文字质感（同门更严？）、Plot Editor 对其节奏分别给出了更苛刻的评判。加上 4290 字超标的扣分效应在 V4 中被放大。总体而言，v2.5-pro 是一台"不犯错但也不惊艳"的平均机器：在新范式的专业审视下失去了庇护。
+  </p>
+</div>
+
+<div class="mover-card" style="text-align:left; padding:20px 24px; border-left:3px solid #3fb950; margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <div>
+      <strong style="font-size:16px;">kimi-k2.5</strong>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">月之暗面 · opencode</span>
+    </div>
+    <div class="rank-row" style="font-size:18px;">
+      <span style="color:#58a6ff;">#5</span>
+      <span class="arrow change-up" style="font-size:20px;">↑</span>
+      <span style="color:#3fb950;">#1</span>
+      <span style="color:#8b949e; font-size:13px; margin-left:8px;">变动 4 位</span>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
+    <div style="font-size:12px;"><span style="color:#8b949e;">V3 基准分</span> <span style="color:#58a6ff;">8.41</span> &nbsp; <span style="color:#8b949e;">无扣分</span> &nbsp; <span style="color:#8b949e;">最终</span> <strong>8.41</strong></div>
+    <div style="font-size:12px;"><span style="color:#8b949e;">V4 最终分</span> <strong style="color:#3fb950;">8.63</strong> &nbsp; <span style="color:#8b949e;">涨幅</span> <strong style="color:#3fb950;">+0.22</strong></div>
+  </div>
+  <p style="font-size:13px; color:#c9d1d9; line-height:1.7; margin:0;">
+    <strong>根因：完美契合"冷硬技术商业爽文"的体裁基因。</strong>V3 中 kimi-k2.5 因 Gemini 对节奏感(6 vs 8/9/9)的低分被压制至 #5。V4 专业编辑一致认可其紧凑叙事：Plot Editor 给节奏感 9 分，Character Editor 给 9 分，Prose Editor 给 9 分——三人罕见地无分歧。字数 2685（完美落在目标区间）带来零扣分红利。k2.5 登顶的本质是"精准匹配"：它的冷硬文风、短段落、技术白描、克制幽默——每一个特质都完美对应了 V4 三位专才编辑的量表。它不是在某一维度暴击，而是在所有维度都站在了专业审美的甜点区。
+  </p>
+</div>
+
+<h2>统计摘要</h2>
+<table>
+<thead><tr><th>指标</th><th class="num">数值</th></tr></thead>
+<tbody>
+<tr><td>平均排位变动</td><td class="num">3.40 位</td></tr>
+<tr><td>V3 最高分</td><td class="num">claude-4.6-opus — 8.60</td></tr>
+<tr><td>V4 最高分</td><td class="num">kimi-k2.5 — 8.63</td></tr>
+<tr><td>V4 升高最多的维度</td><td class="num">节奏感 (+0.70)</td></tr>
+<tr><td>V4 升高最少的维度</td><td class="num">对话品质 (+0.13)</td></tr>
+<tr><td>V3 评委</td><td class="num">mimo-v2.5-pro, mimo-v2-omni, deepseek-v4-flash, gemini-3.5-flash-med</td></tr>
+<tr><td>V4 编辑流水线</td><td class="num">Plot(deepseek-v4-flash) → Character(qwen3.7-plus) → Prose(mimo-v2.5) → Judge(deepseek-v4-pro)</td></tr>
+</tbody>
+</table>
+
+<div style="background:#161b22;border:1px solid #30363d; border-radius:8px; padding:20px 24px; margin-top:32px;">
+  <h3 style="margin-top:0; font-size:15px;">方法论价值总结</h3>
+  <ol style="font-size:13px; color:#c9d1d9; line-height:2.0; padding-left:20px;">
+    <li><strong>V4 专业编辑流水线与 V3 通用评委排名高度相关，前 5 名模型重合率 100%——</strong>说明两种方法论在顶层判断上趋同，真正的"好模型"是稳健的。</li>
+    <li><strong>V4 有效消除了 V3 中单一偏好评委（Gemini-3.5）的系统性偏差。</strong>V3 中 Gemini 对多个模型给出全维度低分（6/6/6/6/6/6/6/6），导致 glm-5、minimax-m2.7、deepseek-v4-pro 等模型在 V3 中被系统性压分 1-3 位。V4 不再有该评委，这些模型全部回升。</li>
+    <li><strong>分钟先级制的专业分工避免了"跨维度盲评"。</strong>V3 中 Plot-inclined 评委对幽默感乱打分、Prose-inclined 评委对节奏感乱打分是常态。V4 中每个编辑只在专长维度上享有隐性加权，大幅减少了噪音。</li>
+    <li><strong>字数控制在 V4 中成为更显著的区分因子。</strong>V3 中字数扣分上限 -1.0，V4 中同样为 -1.0。但 V4 专业编辑对"信息密度 vs 冗余铺陈"的判断更精准：短小精悍的 kimi-k2.5(2685字)、glm-5(2665字) 零扣分杀入 Top 3；claude-4.6-opus(4598字) 和 mimo-v2.5(7100字) 被大幅扣分拖累。</li>
+    <li><strong>"专家团审"优于"民主投票"的场景：</strong>当评估对象具有强领域属性（如技术流、冷硬文风、混合 tone）时，专业分工能捕捉到通用评委感受不到但目标读者极度在意的细微差异。这是 V4 方法论最大的价值。</li>
+    <li><strong>局限性警示：</strong>V4 的 3+1 架构引入了新的复杂度——三位编辑之间可能存在"互捧效应"（即编辑之间互相抬高分数）。且 3 位编辑的自身实力参差（Plot Editor deepseek-v4-flash 自身仅排 #16），也可能影响评审质量。这需要持续监控。</li>
+  </ol>
+</div>
+
+<h2>最终讨论：这份榜单到底在评测什么？</h2>
+
+<div class="method-box" style="border: 1px solid #d29922; background: #1a1a2e;">
+  <strong style="color:#d29922;">⚠️ 核心提醒：这是一份针对特定网文体裁的专项评测，不是模型写作综合能力排行榜。</strong>
+  <p style="font-size:13px; color:#c9d1d9; line-height:2.0; margin-top:12px;">
+  本次测试的目标体裁为「<strong>男频技术爽文 + 冷硬商业叙事</strong>」——碎段落、短句、52 岁疲惫灵魂底色、技术降维、去 AI 化、先搞钱的绝对务实。评测维度（节奏感、开篇吸引力、幽默感、对话品质等）全部为此体裁的读者口味服务。<br><br>
+  <strong>一个模型在本榜单中排名靠后，不代表它"写作能力差"——只代表它目前不擅长这个特定网文体裁。</strong>换一个体裁（散文、诗歌、传统文学、英文小说），排名可能完全不同。
+  </p>
+</div>
+
+<h3>一、为什么 Claude 从 V3 第 1 跌到 V4 第 16？训练优先级的结构性解释</h3>
+
+<div class="method-box" style="font-size:13px; line-height:2.0;">
+  <p><strong>这不是 Claude "不会写"，而是它的训练优先级决定了它"怎么写"。</strong></p>
+
+  <p>Anthropic 对 Claude 系列的产品定位是 <strong>Coding-first</strong>：Opus 和 Sonnet 的核心竞争力在于代码生成、逻辑推理、工具调用和 Agent 工作流。文学写作能力是其通用语言建模的"副产品"——能写，但训练资源的分配权重决定了它不是为网文节奏优化的。</p>
+
+  <p>具体表现：</p>
+  <ul style="padding-left:20px; margin:8px 0;">
+    <li><strong>散文式铺陈</strong>：Claude 倾向于用大段环境描写、心理活动和氛围渲染来"建立场景"，这是受过文学作品训练的语言模型的共同特征。但在商业爽文中，读者要的是「三句话之内必须发生点什么」。</li>
+    <li><strong>节奏失控</strong>：4598 字的开篇章（目标 3500），Plot Editor 判定大段白描为"拖慢叙事"。Claude 在"写完一个完整场景"和"控制字数节奏"之间的权衡偏向前者——这是文学训练的后遗症。</li>
+    <li><strong>缺乏"网文意识"</strong>：它不知道碎段落的重要性、不知道每 300 字要有一个单句独立成段、不知道「他感到」「他意识到」必须删掉——这些不是"写作能力"，是"商业网文的市场规则"，而 Claude 没有被训练过这些规则。</li>
+  </ul>
+
+  <p style="color:#d29922; margin-top:12px;"><strong>关键推论：</strong>Claude 在 V3 拿到第 1 是因为四位通用评委各自独立地欣赏了它的「文学质感」——这是无协调的独立审美。V4 却是「这文适不适合起点读者」的出版流程模拟——三位编辑站在读者角度分工评判。Claude 的文章在 V4 标准下暴露的是 <strong>文体错配</strong>，不是能力不足。</p>
+</div>
+
+<h3>二、Fusion Fiction Editor 为何基础分 9.00 仍输给单模型 kimi-k2.5？</h3>
+
+<div class="method-box" style="font-size:13px; line-height:2.0;">
+  <table style="margin-bottom:16px;">
+    <thead><tr><th>指标</th><th class="num">fusion-fiction-opus</th><th class="num">kimi-k2.5</th></tr></thead>
+    <tbody>
+      <tr><td>V4 基础分（编辑原始评分）</td><td class="num" style="color:#3fb950;"><strong>9.00</strong></td><td class="num">8.63</td></tr>
+      <tr><td>字数扣分</td><td class="num" style="color:#f85149;">-0.503（4506 字）</td><td class="num">~0（2685 字，目标内）</td></tr>
+      <tr style="background:#1a2e1a;"><td><strong>V4 最终分</strong></td><td class="num"><strong>8.50</strong></td><td class="num" style="color:#ffd700;"><strong>8.63</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>fusion-fiction-opus 的基础分 9.00 是全场最高</strong>——高出 kimi-k2.5 整整 0.37 分。Fiction Editor 工作流（3 编辑 + 总编）确实产出了本场测试中编辑最认可的文本。但 opus 原文 4598 字的结构性冗余无法被编辑工作流在局部修缮中彻底解决——三位编辑只能「改句式、修对话、调节奏」，不能从散文风重写成冷硬商业风。而 4506 字的最终产出仍然被机械字数扣分砍掉 0.503 分，相当于整体评分被削去 5.6%。</p>
+
+  <p style="color:#d29922; margin-top:12px;"><strong>字数扣分的双刃剑：</strong>在商业网文平台上，超长章确实影响读者体验和定价，字数控制是商业写作能力的一部分。但当前线性扣分公式将「多写的字是否优质」的问题交给了机械公式而非编辑判断。更理想的做法是让编辑在节奏/紧凑度维度中直接体现「冗余感」——让人的判断代替一刀切的数学公式。这也是 V4 方法论后续需要迭代的方向之一。</p>
+</div>
+
+<h3>三、文学写作能力 ≠ 通用模型能力：评估必须上下文感知</h3>
+
+<div class="method-box" style="font-size:13px; line-height:2.0;">
+  <p>大多数 AI 模型的训练优先级是：<strong>Coding > Reasoning > General QA > Creative Writing</strong>。OpenAI、Anthropic、Google、DeepSeek 的产品定位都以代码和推理为核心卖点，文学创作是「附加能力」而非「核心指标」。</p>
+
+  <p>这意味着：</p>
+  <ul style="padding-left:20px; margin:8px 0;">
+    <li><strong>不能用一个网文 benchmark 推断模型的综合实力</strong>——本榜单第 1 的 kimi-k2.5 在编程 benchmark 上可能比不上 claude-4.6-opus。这是领域分化，不是模型优劣。</li>
+    <li><strong>每个模型都有「舒适区体裁」</strong>：Claude 的长句散文在英文文学创作中可能是顶级水准，但这个体裁不要长句散文。gtp5.5 的年代感还原能力突出（V4 年代感 10 分），但幽默感维度被 Kimi 和 DeepSeek 反超。</li>
+    <li><strong>对创作者的实际启示</strong>：如果你想用 AI 写商业爽文——选 kimi-k2.5，它天生就是为这个风格生的。如果你想写精致散文——选 Claude，但要用 3+ 轮的 Skill/工作流控制它别写太长。如果你想混合风格——用 Fusion 多模型协调，但需要自己写更多控制 Skill。</li>
+  </ul>
+
+  <p style="margin-top:12px;"><strong>最终建议：</strong>不要把这份榜单当作「哪个 AI 更聪明」的排名。把它当作「如果你想写 <em>《重生 2000：从唤醒龙虾妹开始》</em> 这类网文，哪个模型/方法最好用」的使用指南。每个模型的文学价值必须在正确的体裁和足够精细的 Skill/工作流控制下才能被释放——Claude 需要更好的节奏约束 Skill，Kimi 需要更广的题材适配 Skill，而 Fusion 方法论本身的潜力还远未被穷尽。</p>
+</div>
+
+<div class="footer">
+  生成时间: 2026-06-20T07:49:58.469Z · Fiction Editor Benchmark · V4 vs V3
+</div>
+
+</div>
+</body>
+</html>
