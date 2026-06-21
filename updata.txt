@@ -1,3 +1,47 @@
+[2026-06-21] Optimized Research Report Structure and TOC
+- Updated research report:
+  - openrouter_fusion_research.md (Inserted detailed Table of Contents, corrected double line endings from previous edits, and added a cross-reference note for the V5 GLM Creative Flow in Section 6.5)
+
+[2026-06-21] Detailed and Evaluated Roadmap Section
+- Updated research report:
+  - openrouter_fusion_research.md (Detailed Section 8.6 with specific actions, priorities, and quantitative benefit evaluations for Phases 1-4, converted to clean Markdown table structure)
+
+[2026-06-21] Added GLM optimization scheme to Research Report
+- Updated research report:
+  - openrouter_fusion_research.md (Added Section 10.5 detailing the GLM Creative Flow optimization scheme, replacing DeepSeek V4 Flash with GLM-5.2 for Plot Editor, including feasibility and cost comparison)
+
+[2026-06-21] Integrated Fiction Editor V3 vs V4 Benchmark into Research Report
+- Updated research report:
+  - openrouter_fusion_research.md (Added Chapter 10 detailing the v3-v4 comparison benchmark, local Fusion data performance, ranking movement analysis, and token economics takeaways)
+
+[2026-06-21] Added Gemini 3.5 Flash Self-Fusion configuration
+- Updated configuration documentation:
+  - .opencode/skills/fusion-research/SKILL.md (Added Gemini Self-Fusion tier details and instructions)
+  - README.md (Added E Gemini Self-Fusion to the scheme comparison table)
+
+[2026-06-21] Compared Fusion with Other Multi-Model Workflows
+- Updated research report:
+  - openrouter_fusion_research.md (Added Chapter 9 detailing the comparison between Fusion, Multi-Agent Debate/MoA, Routing, and Design-Implement-Review Pipelines, including topology diagrams and a comparison matrix)
+
+[2026-06-21] Established Project Rules and Benchmark Roadmap
+- Renamed agent configuration file:
+  - .opencode/agents/fusion-skyunion.md -> .opencode/agents/fusion-thirdparty.md
+- Updated configuration file:
+  - opencode.jsonc (renamed provider 'skyunion' to 'thirdparty' and updated model/agent refs)
+- Updated documentation files:
+  - README.md (renamed agent references and added Project Rules section)
+  - openrouter_fusion_research.md (renamed agent references and detailed the P0 Quantitative Evaluation Mechanism using the ResearchData/LLM framework)
+  - .opencode/skills/fusion-research/SKILL.md (renamed agent references)
+- Added Project Rules:
+  - Documented IP restrictions for the thirdparty API
+  - Documented requirement to switch to Antigravity environment when running Gemini
+
+[2026-06-21] Completed Gemini research in openrouter_fusion_research.md
+- Updated research report:
+  - openrouter_fusion_research.md
+  - Added Gemini's perspective on five previously missed blind spot topics (Self-Fusion, Multilingual, Panel Interaction, Secondary Effects, Safety/Alignment)
+  - Resolved partial failure status of the analysis session
+
 [2026-06-20] Pull latest updates from KainHuang777/opencode_fusion.git
 - Added new agent configs:
   - .opencode/agents/fusion-gemini.md

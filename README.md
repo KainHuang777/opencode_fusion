@@ -48,7 +48,7 @@ E:\WORK\Fusion\
 │   ├── fusion-qwen.md           # [Research] 綜合分析 Panel (Qwen3.7 Plus)
 │   ├── fusion-glm.md            # [Research] 創意思考 Panel (GLM-5.2)
 │   ├── fusion-gemini.md         # [Research] Google 多樣性 Panel (Gemini 3.5 Flash, free tier)
-│   ├── fusion-skyunion.md       # [Research] Anthropic 多樣性 Panel (Claude Haiku 4.5, 第三方API)
+│   ├── fusion-thirdparty.md     # [Research] Anthropic 多樣性 Panel (Claude Haiku 4.5, 第三方API)
     │   ├── fusion-budget-ds.md      # [Research] 平價 Panel (V4 Flash)
     │   ├── fusion-budget-mimo.md    # [Research] 平價 Panel (MiMo V2.5)
     │   ├── fusion-fiction-plot.md   # [Fiction] 結構編輯 (V4 Flash)
@@ -87,7 +87,7 @@ E:\WORK\Fusion\
 | `fusion-qwen` | Qwen3.7 Plus | 綜合分析、廣度覆蓋 | $0.40/$1.60 | ✅ |
 | `fusion-glm` | GLM-5.2 | 創意思考、反向論證 | $1.40/$4.40 | ✅ |
 | `fusion-gemini` | Gemini 3.5 Flash | Google 架構多樣性 | Free tier | ✅ |
-| `fusion-skyunion` | Claude Haiku 4.5 | Anthropic 架構、細膩推理 | 第三方API | ✅ |
+| `fusion-thirdparty` | Claude Haiku 4.5 | Anthropic 架構、細膩推理 | 第三方API | ✅ |
 | `fusion-budget-ds` | V4 Flash | 快速技術分析 | $0.14/$0.28 | ⚠️ 衝突 |
 | `fusion-budget-mimo` | MiMo V2.5 | 廣度快速覆蓋 | $0.14/$0.28 | ✅ |
 
@@ -248,8 +248,9 @@ E:\WORK\Fusion\
 | **B 旗艦** | V4 Pro | K2.7 Code | Qwen3.7 Plus | GLM-5.2 | — | ~$2.75/$11.00 | 最高品質研究 |
 | **C 全 Go 平價** | V4 Pro | K2.7 Code | MiMo V2.5 | V4 Flash | — | ~$1.23/$4.56 | 無 Gemini 時 |
 | **D Self-Fusion** | V4 Pro | V4 Pro(A) | V4 Pro(B) | — | — | ~$1.74/$3.48 | 快速驗證 |
+| **E Gemini Self-Fusion** | Gemini Flash | Gemini Flash(A) | Gemini Flash(B) | — | — | Free | 於 Antigravity IDE 使用 Gemini 當前主模型時 |
 
-> A 方案為預設 free tier 組合：四種不同架構（Moonshot, Alibaba, Google, Anthropic）。Gemini 3.5 Flash 經 Google AI Studio free API key 接入，Claude Haiku 4.5 經第三方API接入。
+> A 方案為預設 free tier 組合：四種不同架構（Moonshot, Alibaba, Google, Anthropic）。Gemini 3.5 Flash 經 Google AI Studio free API key 接入，Claude Haiku 4.5 經第三方API接入。E 方案適合在 Antigravity 本地執行環境中以 Gemini 3.5 Flash 為主模型時使用。
 
 ## 切換方案
 
@@ -262,7 +263,7 @@ E:\WORK\Fusion\
 "fusion-qwen": {
   "model": "opencode-go/qwen3.7-plus"
 },
-"fusion-skyunion": {
+"fusion-thirdparty": {
   "model": "第三方-provider/claude-haiku-4-5-20251001"  // 依你的第三方API provider 設定
 }
 ```
@@ -278,6 +279,12 @@ E:\WORK\Fusion\
 - Fusion 延遲約為普通請求 2-3 倍（平行派遣可緩解）
 - 部分 panel 失敗時仍產出分析，標註失敗模型
 - 所有合成結論標註各觀點來源
+
+## 專案開發與操作規則
+
+1. **名詞規範**：在 README 或者研究文件中關於原服務商 `skyunion` 的名詞皆須隱去，使用「第三方API」稱之。
+2. **網路與 IP 限制**：未來如果需要操作第三方API 代理 (`fusion-thirdparty`)，需要記得該服務有 IP 限制。
+3. **執行環境限制**：操作 `Gemini` 相關代理 (`fusion-gemini`) 時，必須將執行環境切換到 Antigravity 中運行（避免限流與 API 異常）。
 
 ## 效能參考（DRACO Benchmark）
 

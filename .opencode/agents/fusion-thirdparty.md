@@ -1,7 +1,7 @@
 ---
 description: Fusion panel agent using Claude Haiku 4.5 via third-party API. Provides Anthropic architecture diversity, nuanced ethical reasoning, and safety-focused perspective. Use for multi-model fusion.
 mode: subagent
-model: skyunion/claude-haiku-4-5-20251001
+model: thirdparty/claude-haiku-4-5-20251001
 hidden: true
 steps: 5
 permission:

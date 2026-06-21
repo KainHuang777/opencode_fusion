@@ -130,14 +130,14 @@ After producing the final answer, briefly self-evaluate:
 | `fusion-qwen` | opencode-go/qwen3.7-plus | Comprehensive analysis, broad context | $0.40/$1.60 per 1M | ✅ All judges |
 | `fusion-glm` | opencode-go/glm-5.2 | Creative thinking, alternative angles | $1.40/$4.40 per 1M | ✅ All judges |
 | `fusion-gemini` | google/gemini-3.5-flash | Google diversity, alternative framing | Free tier (API key) | ✅ All judges |
-| `fusion-skyunion` | claude-haiku-4-5-20251001 (第三方API) | Anthropic diversity, nuanced reasoning | Via 第三方API | ✅ All judges |
+| `fusion-thirdparty` | claude-haiku-4-5-20251001 (第三方API) | Anthropic diversity, nuanced reasoning | Via 第三方API | ✅ All judges |
 | `fusion-budget-ds` | opencode-go/deepseek-v4-flash | Fast budget analysis | $0.14/$0.28 per 1M | ⚠️ Conflicts if Judge = DeepSeek |
 | `fusion-budget-mimo` | opencode-go/mimo-v2.5 | Budget broad coverage | $0.14/$0.28 per 1M | ✅ All judges |
 
 ### Perspective Assignment (default Judge = DeepSeek V4 Pro):
 
 **Free Tier (default):
-- **4-panel free**: fusion-kimi (code architecture) + fusion-qwen (broad/comprehensive) + fusion-gemini (Google diversity, free tier) + fusion-skyunion (Anthropic diversity)
+- **4-panel free**: fusion-kimi (code architecture) + fusion-qwen (broad/comprehensive) + fusion-gemini (Google diversity, free tier) + fusion-thirdparty (Anthropic diversity)
   *(4 different architectures: Moonshot, Alibaba, Google, Anthropic. Cost: ~$1.35/$5.60 on opencode-go, Gemini free, 第三方API per pricing.)*
 - **3-panel free**: fusion-kimi (code architecture) + fusion-qwen (broad/comprehensive) + fusion-gemini (Google diversity, free tier)
 - **2-panel free**: fusion-kimi (technical) + fusion-qwen (comprehensive)
@@ -152,10 +152,12 @@ After producing the final answer, briefly self-evaluate:
 - **2-panel**: fusion-kimi (technical) + fusion-qwen (comprehensive)
 
 **Self-Fusion (special case):
-- **2-panel self**: fusion-deepseek (perspective A) + fusion-deepseek (perspective B)
+- **2-panel self (DeepSeek)**: fusion-deepseek (perspective A) + fusion-deepseek (perspective B)
   *(Judge bias intentionally accepted — synthesis steps still provide +5.2 gain)*
+- **2-panel self (Gemini)**: fusion-gemini (perspective A) + fusion-gemini (perspective B)
+  *(Optimal for Gemini-native environments when the IDE Main Model is Gemini 3.5 Flash. Provides self-introspection optimization with expected +5.2 to +6.7 gain)*
 
-**Note: All DeepSeek-family panels are excluded from default Budget/Flagship because Judge is DeepSeek V4 Pro. To use DeepSeek panels, change Judge to a non-DeepSeek model first.
+**Note: All DeepSeek-family panels are excluded from default Budget/Flagship because Judge is DeepSeek V4 Pro. To use DeepSeek panels, change Judge to a non-DeepSeek model first. Similarly, for Gemini Self-Fusion, the IDE main model should ideally be set to Gemini 3.5 Flash to orchestrate the subagents.
 
 ## Example Usage
 
