@@ -7,6 +7,9 @@ description: Use ONLY for fiction writing, novel chapters, short stories, or nar
 
 This skill adapts the Fusion multi-model approach for fiction writing. Three specialized literary editors (Plot, Character, Prose) review the text in parallel, then an Editor-in-Chief (Judge) synthesizes their critiques and produces a final revised chapter.
 
+> **適用環境**：本版本（`.opencode/skills/`）使用**不同架構模型**分別擔任三位編輯，需要多模型 token 環境。
+> 若你在 Antigravity 等**僅單一底層模型**的 IDE 運行，請改用 `.agents/skills/fiction-editor`（單模型 Self-Fusion 版，靠角色化提示詞區分編輯視角）。
+
 ## Core Principle
 
 **一篇小說的修改需要同時關注結構、人物與文筆三個層面。不同模型對不同層面的敏感度不同，平行審稿 + 綜合改稿能產出比單一編輯更好的結果。**
@@ -84,6 +87,8 @@ Launch three panel agents IN PARALLEL. Give each agent:
 2. A perspective-specific instruction (see below)
 3. Ask for structured analysis
 
+> **失敗處理**：若某個 panel agent 失敗，在報告中標記 `[FAILED: 編輯角色]`，以剩餘 panel 報告繼續 Phase 3，並在最終輸出開頭說明「X/3 編輯成功」。不放棄已完成的 panel 結果。
+
 #### Panel A: Plot & Structure Editor (`fusion-fiction-plot`)
 Focus areas:
 - Narrative structure (beginning/middle/end balance)
@@ -142,6 +147,14 @@ When generating the revised chapter:
 - Preserve the author's unique voice and style
 - Mark major changes with inline comments `[改: 說明]`
 - If the user originally provided the text in Chinese, output the revision in Chinese
+
+> ⚠️ **字數與品質的權衡（重要）**
+>
+> 根據本專案 Fiction Editor V4 Benchmark 實測（§10 研究報告），字數超標是最常見的「機械扣分」來源——即使文本品質極高（如 fusion-fiction-opus 編輯分 9.00 冠全場，仍因字數超標被拖至 #3）。
+>
+> - 若使用者**有明確字數限制**（如「約 3000 字」）：Judge 必須在修改後明確核對字數，並在輸出時說明是否符合。不得讓高品質修改因字數失控而被評分懲罰。
+> - 若使用者**無字數要求**：以品質為優先，但仍應避免在修改中無謂地大幅擴充原文篇幅。
+> - 若優先保留某段精彩內容會超出字數：**明確告知使用者取捨**，由作者決定，不要靜默截斷。
 
 ## Available Agents
 

@@ -6,6 +6,19 @@
 
 將同一任務派送給多個不同架構的模型，由 Judge 分析共識與差異後產出綜合結果。三個臭皮匠勝過一個諸葛亮。
 
+## 該用哪一套？（先看這裡）
+
+本專案提供**兩套並存的技能**，依你的執行環境選擇：
+
+| 你的環境 | 該用 | 路徑 | 做法 |
+|---------|------|------|------|
+| **有多個模型可用**（opencode-go / Google / 第三方 API 等） | **真·多模型 Fusion** | `.opencode/skills/` | 不同架構模型平行盲測，Judge 為另一架構，最大化盲點互補 |
+| **僅單一底層模型**（如 Antigravity 等無法切換模型的 IDE） | **單模型 Self-Fusion** | `.agents/skills/` | 同一模型 ×2，靠角色化提示詞區分視角，同模型 Judge |
+
+> 兩者**非互斥**。OpenRouter 原始研究即同時提供「不同模型」與「同模型 ×2」兩種合法選項。
+> 效能優先序：**不同架構模型 > 同模型 ×2（Self-Fusion）> 單一模型直答**。
+> Self-Fusion 相較單模型有明確提升（DRACO 上 Opus 4.8：58.8%→65.5%），但單模型環境下的實際增益尚未經本專案 Benchmark 量化。
+
 ## 適用場景
 
 | 場景 | 相對單一模型增益 |
@@ -37,28 +50,31 @@ opencode
 ## 檔案結構
 
 ```
-E:\WORK\Fusion\
+d:\work\fortest\Fusion\opencode_fusion\
 ├── opencode.jsonc                    # 專案配置（agent + skill 註冊）
-├── openrouter_fusion_research.md    # 原始研究報告
+├── openrouter_fusion_research.md    # 技術研究報告
 ├── README.md                        # 本文件
-└── .opencode/
-    ├── agents/
-    │   ├── fusion-deepseek.md       # [Research] 技術深度 Panel (V4 Pro)
-    │   ├── fusion-kimi.md           # [Research] 架構分析 Panel (K2.7 Code)
-│   ├── fusion-qwen.md           # [Research] 綜合分析 Panel (Qwen3.7 Plus)
-│   ├── fusion-glm.md            # [Research] 創意思考 Panel (GLM-5.2)
-│   ├── fusion-gemini.md         # [Research] Google 多樣性 Panel (Gemini 3.5 Flash, free tier)
-│   ├── fusion-thirdparty.md     # [Research] Anthropic 多樣性 Panel (Claude Haiku 4.5, 第三方API)
-    │   ├── fusion-budget-ds.md      # [Research] 平價 Panel (V4 Flash)
-    │   ├── fusion-budget-mimo.md    # [Research] 平價 Panel (MiMo V2.5)
-    │   ├── fusion-fiction-plot.md   # [Fiction] 結構編輯 (V4 Flash)
-    │   ├── fusion-fiction-character.md  # [Fiction] 人物編輯 (Qwen3.7 Plus)
-    │   └── fusion-fiction-prose.md  # [Fiction] 文筆編輯 (MiMo V2.5)
+├── fusion_roadmap.md                # 系統優化路線圖
+├── v3-v4-comparison-summary.md      # V3 vs V4 評測摘要
+├── updata.txt                       # 歷史更新日誌
+├── .opencode/                        # opencode 多模型協同配置與技能
+│   ├── agents/
+│   │   ├── fusion-deepseek.md       # 技術深度 Panel (V4 Pro)
+│   │   ├── fusion-kimi.md           # 架構分析 Panel (K2.7 Code)
+│   │   ├── fusion-qwen.md           # 綜合分析 Panel (Qwen3.7 Plus)
+│   │   ├── fusion-glm.md            # 創意思考 Panel (GLM-5.2)
+│   │   ├── fusion-gemini.md         # Google 多樣性 Panel (Gemini 3.5 Flash)
+│   │   ├── fusion-thirdparty.md     # Anthropic 多樣性 Panel (Claude Haiku 4.5)
+│   │   └── ...                      # 其他平價/小說編輯 Panel
+│   └── skills/
+│       ├── fusion-research/         # opencode 跨模型研究工作流
+│       └── fiction-editor/          # opencode 跨模型小說編輯工作流
+└── .agents/                          # Antigravity 2.0 專用配置與技能 (單模型自融合)
     └── skills/
         ├── fusion-research/
-        │   └── SKILL.md             # 研究分析工作流
+        │   └── SKILL.md             # Antigravity 自融合研究工作流
         └── fiction-editor/
-            └── SKILL.md             # 小說編輯工作流
+            └── SKILL.md             # Antigravity 自融合小說編輯工作流
 ```
 
 ## 工作流一：Fusion Research（研究分析）
@@ -239,6 +255,23 @@ E:\WORK\Fusion\
    ```
 
 3. 重啟 opencode，小說專案即可獨立使用 Fiction Editor 工作流。
+
+## Antigravity 2.0 本地環境自融合 (Self-Fusion) 適配
+
+由於 **Antigravity 2.0** 系統為單一模型（如當前配置的 Gemini 3.5 Flash）驅動的 Agent 執行環境，無法在運行中動態切換底層大模型。因此，本專案在 `.agents/` 目錄下特別部署了與 `opencode` 完全隔離的自融合 (Self-Fusion) 工作流技能。
+
+### 核心機制
+1. **角色化定義 (Role-based Subagents)**：
+   主代理在運行時調用 `define_subagent` 定義數個虛擬的子任務代理，並各自注入專屬的 `system_prompt`（例如：在小說修改中，劃分為情節結構、人物刻畫、文筆修飾三個獨立角色）。
+2. **平行派發與獨立採樣 (Parallel Dispatch)**：
+   主代理利用 `invoke_subagent` 將子任務分發至背景平行運行。利用不同角色 Prompt 引導與模型生成的概率隨機性，進行雙重/多重獨立採樣，藉此交叉驗證並過濾單次幻覺。
+3. **主代理 Judge 統合**：
+   主代理自動收集子代理報告，進行共識與分歧分析，最終產出經雙重驗證的結構化解答。Self-Fusion（同模型 ×2 + 同模型 Judge）是 OpenRouter 原始研究中的合法組合，DRACO 上 Opus 4.8 達 **+6.7 分**（58.8%→65.5%）；惟本環境（Gemini 3.5 Flash 等）的實際增益並未經明確 Benchmark 量化，上述數字僅為 Opus 4.8 的參考值。Self-Fusion 仍優於單一模型直接回答，但若你具備多模型 token，請優先使用 `.opencode/` 的真·多模型版本。
+
+### 調用方式
+在 Antigravity 2.0 中對話時，當輸入以下關鍵字即會自動加載 `.agents/skills` 下對應的技能：
+- **自融合研究 (fusion-research)**：關鍵字包括 `研究`、`評估`、`比較架構` 等。
+- **自融合文學 (fiction-editor)**：關鍵字包括 `小說`、`修改文章`、`編輯章節` 等。
 
 ## 方案比較
 
